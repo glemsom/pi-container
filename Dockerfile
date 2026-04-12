@@ -25,7 +25,7 @@ RUN npm install -g lean-ctx-bin
 RUN npm install -g @aliou/pi-guardrails
 RUN npm install -g @mjakl/pi-subagent
 
-RUN lean-ctx setup
+RUN touch /home/node/.bashrc && lean-ctx setup
 
 WORKDIR /workspace
 

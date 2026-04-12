@@ -110,6 +110,7 @@ DOCKER_ARGS=(
     --env "HOME=/home/node"
     --env "PI_CODING_AGENT_DIR=/home/node/.pi/agent"
     --workdir /workspace
+    --publish 3333:3333  # lean-ctx server
 )
 
 # Forward relevant environment variables
@@ -211,9 +212,10 @@ fi
 
 # Show docker command if verbose
 if [[ "$VERBOSE" == "true" ]]; then
-    echo -e "${GREEN}Running:${NC} docker run $IMAGE pi ${PI_ARGS[*]}" >&2
+    echo -e "${GREEN}Running:${NC} docker run $IMAGE bash -l -c pi ${PI_ARGS[*]}" >&2
     echo -e "${GREEN}Docker args:${NC} ${DOCKER_ARGS[*]}" >&2
 fi
 
-# Run pi in container
-exec docker run "${DOCKER_ARGS[@]}" "$IMAGE" pi "${PI_ARGS[@]}"
+# Run pi in container through bash (login shell to source ~/.bashrc for leanctx aliases)
+# First run lean-ctx doctor to verify lean-ctx is healthy, then run pi
+exec docker run "${DOCKER_ARGS[@]}" "$IMAGE" bash -l -c "lean-ctx doctor && pi ${PI_ARGS[*]}"
