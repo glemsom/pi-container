@@ -192,13 +192,6 @@ if [[ "$MOUNT_PI" == "true" ]]; then
         DOCKER_ARGS+=(-v "$USER_HOME/.agents:/home/node/.agents:ro")
     fi
 
-    # Note: We don't mount ~/.npmrc because it often contains host-specific paths (like prefix=)
-    # that break in the container. The container has npm configured to use /usr/local by default.
-    # If you need npm auth in the container, set NPM_TOKEN env var instead.
-    # if [[ -f "$USER_HOME/.npmrc" ]]; then
-    #     DOCKER_ARGS+=(-v "$USER_HOME/.npmrc:/home/node/.npmrc:ro")
-    # fi
-
     # ~/.gitconfig -> /home/node/.gitconfig
     if [[ -f "$USER_HOME/.gitconfig" ]]; then
         DOCKER_ARGS+=(-v "$USER_HOME/.gitconfig:/home/node/.gitconfig:ro")
