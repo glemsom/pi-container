@@ -17,12 +17,6 @@ Run the [Pi coding agent](https://pi.dev) inside an isolated Docker container, w
 docker build -t pi-agent:latest .
 ```
 
-Or pull from a registry (if available):
-
-```bash
-docker pull pi-agent:latest
-```
-
 ### 2. Run Pi
 
 **Interactive mode** (your current directory is mounted as `/workspace`):
