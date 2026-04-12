@@ -150,10 +150,41 @@ done
 HOST_CWD="$(pwd)"
 DOCKER_ARGS+=(-v "$HOST_CWD:/workspace")
 
+# Recursively find and mount symlinks in a directory
+# Args: $1=host_path $2=container_path
+# Returns: adds -v arguments for symlinks to DOCKER_ARGS array
+collect_symlink_mounts() {
+    local host_path="$1"
+    local container_path="$2"
+    
+    for item in "$host_path"/*; do
+        [[ -e "$item" ]] || continue
+        local item_name=$(basename "$item")
+        local container_item="$container_path/$item_name"
+        
+        if [[ -L "$item" ]]; then
+            # Symlink: resolve target and mount it
+            local target=$(readlink -f "$item")
+            if [[ -d "$target" ]]; then
+                DOCKER_ARGS+=(-v "$target:$container_item")
+                collect_symlink_mounts "$target" "$container_item"
+            elif [[ -f "$target" ]]; then
+                DOCKER_ARGS+=(-v "$target:$container_item")
+            fi
+        elif [[ -d "$item" ]]; then
+            # Regular directory: recurse to find nested symlinks
+            collect_symlink_mounts "$item" "$container_item"
+        fi
+        # Regular files don't need special handling
+    done
+}
+
 # Mount pi configuration directories
 if [[ "$MOUNT_PI" == "true" ]]; then
     if [[ -d "$USER_HOME/.pi" ]]; then
         DOCKER_ARGS+=(-v "$USER_HOME/.pi:/home/node/.pi")
+        # Find and mount any symlinks recursively under ~/.pi
+        collect_symlink_mounts "$USER_HOME/.pi" "/home/node/.pi"
     fi
 
     # ~/.agents -> /home/node/.agents
