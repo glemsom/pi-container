@@ -3,6 +3,7 @@ FROM node:25-bookworm
 # Install dependencies for terminal and clipboard support
 RUN apt-get update && apt-get install -y \
     dumb-init \
+    apt-utils \
     curl \
     git \
     openssh-client \
@@ -37,10 +38,11 @@ RUN npm install -g @aliou/pi-guardrails
 RUN npm install -g @mjakl/pi-subagent
 
 RUN touch /home/node/.bashrc && lean-ctx setup
-RUN lean-ctx init --global
-RUN lean-ctx init --agent pi
 
 WORKDIR /workspace
+RUN lean-ctx init --agent pi
+
+
 
 # Use dumb-init to handle signals properly
 ENTRYPOINT ["dumb-init", "--"]
