@@ -6,7 +6,18 @@ RUN apt-get update && apt-get install -y \
     curl \
     git \
     openssh-client \
+    gpg \
+    ripgrep \
     && rm -rf /var/lib/apt/lists/*
+
+# Install GitHub CLI (gh)
+# See https://github.com/cli/cli/blob/trunk/docs/install_linux.md#debian
+RUN curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg \
+    && sudo chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg \
+    && echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null \
+    && sudo apt-get update \
+    && sudo apt-get install gh \
+    && sudo rm -rf /etc/apt/sources.list.d/github-cli.list
 
 ENV PATH="/home/node/.local/bin:$PATH"
 
@@ -26,6 +37,8 @@ RUN npm install -g @aliou/pi-guardrails
 RUN npm install -g @mjakl/pi-subagent
 
 RUN touch /home/node/.bashrc && lean-ctx setup
+RUN lean-ctx init --global
+RUN lean-ctx init --agent pi
 
 WORKDIR /workspace
 

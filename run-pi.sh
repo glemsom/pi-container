@@ -208,6 +208,11 @@ if [[ "$MOUNT_PI" == "true" ]]; then
     if [[ -d "$USER_HOME/.ssh" ]]; then
         DOCKER_ARGS+=(-v "$USER_HOME/.ssh:/home/node/.ssh:ro")
     fi
+
+    # ~/.config/gh -> /home/node/.config/gh (GitHub CLI token)
+    if [[ -d "$USER_HOME/.config/gh" ]]; then
+        DOCKER_ARGS+=(-v "$USER_HOME/.config/gh:/home/node/.config/gh:ro")
+    fi
 fi
 
 # Show docker command if verbose
@@ -217,5 +222,5 @@ if [[ "$VERBOSE" == "true" ]]; then
 fi
 
 # Run pi in container through bash (login shell to source ~/.bashrc for leanctx aliases)
-# First run lean-ctx doctor to verify lean-ctx is healthy, then run pi
-exec docker run "${DOCKER_ARGS[@]}" "$IMAGE" bash -l -c "lean-ctx doctor && pi ${PI_ARGS[*]}"
+# First run lean-ctx doctor to verify lean-ctx is healthy, then start dashboard in background and run pi
+exec docker run "${DOCKER_ARGS[@]}" "$IMAGE" bash -l -c "pi ${PI_ARGS[*]}"
