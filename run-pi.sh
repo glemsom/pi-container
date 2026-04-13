@@ -110,7 +110,7 @@ DOCKER_ARGS=(
     --env "HOME=/home/node"
     --env "PI_CODING_AGENT_DIR=/home/node/.pi/agent"
     --workdir /workspace
-    --publish 3333:3333  # lean-ctx server
+    --network host
 )
 
 # Forward relevant environment variables
