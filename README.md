@@ -144,6 +144,9 @@ sudo chown -R "$(id -u)":"$(id -g)" ~/.pi
 
 To avoid all host-home permission issues, use the wrapper default (`/workspace/.pi/agent`) and do not override `PI_CODING_AGENT_DIR`.
 
+For rootless Podman, this wrapper now uses `--userns keep-id` so bind mounts like `/workspace` are writable
+as your host user. If you override container run flags externally, keep that setting.
+
 ## Customization
 
 ### Build a Custom Image

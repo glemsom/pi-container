@@ -107,7 +107,6 @@ DOCKER_ARGS=(
     --interactive
     --tty
     --name "$CONTAINER_NAME"
-    --user "$USER_UID:$USER_GID"
     --env "USER=$USER_NAME"
     --env "HOME=/home/node"
     --env "PI_CODING_AGENT_DIR=$DEFAULT_AGENT_DIR"
@@ -118,7 +117,12 @@ DOCKER_ARGS=(
 # Podman + SELinux can deny writes to bind mounts unless labeling is configured.
 # Disabling container labels for this run avoids EACCES on mounted ~/.pi.
 if [[ "$CONTAINER_ENGINE" == "podman" ]]; then
+    # Rootless Podman bind mounts require keep-id user namespace mapping for writes.
+    DOCKER_ARGS+=(--userns keep-id)
     DOCKER_ARGS+=(--security-opt label=disable)
+else
+    # Docker does not support --userns keep-id; map UID/GID directly.
+    DOCKER_ARGS+=(--user "$USER_UID:$USER_GID")
 fi
 
 # Forward relevant environment variables
