@@ -105,7 +105,7 @@ DOCKER_ARGS=(
     --interactive
     --tty
     --name "$CONTAINER_NAME"
-    --user 1000:1000
+    --user "$USER_UID:$USER_GID"
     --env "USER=$USER_NAME"
     --env "HOME=/home/node"
     --env "PI_CODING_AGENT_DIR=/home/node/.pi/agent"
@@ -194,6 +194,15 @@ collect_symlink_mounts() {
 
 # Mount pi configuration directories
 if [[ "$MOUNT_PI" == "true" ]]; then
+    # Ensure host config directories exist and are writable by the current user.
+    # This avoids EACCES errors inside the container when Pi creates lock/session files.
+    mkdir -p "$USER_HOME/.pi/agent/sessions"
+    if [[ ! -w "$USER_HOME/.pi/agent" ]]; then
+        echo -e "${RED}Error: $USER_HOME/.pi/agent is not writable by user $(whoami).${NC}" >&2
+        echo -e "${YELLOW}Fix with: sudo chown -R $(id -u):$(id -g) \"$USER_HOME/.pi\"${NC}" >&2
+        exit 1
+    fi
+
     if [[ -d "$USER_HOME/.pi" ]]; then
         DOCKER_ARGS+=(-v "$USER_HOME/.pi:/home/node/.pi")
         # Find and mount any symlinks recursively under ~/.pi

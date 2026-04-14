@@ -63,7 +63,7 @@ The wrapper script handles:
 - Mounting Pi configuration (`~/.pi`)
 - Mounting shared skills (`~/.agents`)
 - Forwarding necessary environment variables
-- Setting correct UID/GID for file ownership
+- Running as your host UID/GID for correct file ownership and permissions
 
 ### Usage
 
@@ -93,11 +93,10 @@ Options:
 | Host Path | Container Path | Purpose |
 |-----------|----------------|---------|
 | `$PWD` | `/workspace` | Your working directory (pi's cwd) |
-| `~/.pi` | `/home/pi/.pi` | Pi configuration (settings, themes, packages) |
-| `~/.agents` | `/home/pi/.agents` | Shared skills location |
-| `~/.npmrc` | `/home/pi/.npmrc` | NPM authentication (if exists) |
-| `~/.gitconfig` | `/home/pi/.gitconfig` | Git configuration |
-| `~/.ssh` | `/home/pi/.ssh` | SSH keys (for git operations) |
+| `~/.pi` | `/home/node/.pi` | Pi configuration (settings, themes, packages) |
+| `~/.agents` | `/home/node/.agents` | Shared skills location |
+| `~/.gitconfig` | `/home/node/.gitconfig` | Git configuration |
+| `~/.ssh` | `/home/node/.ssh` | SSH keys (for git operations) |
 
 ## Pi Configuration
 
@@ -115,6 +114,22 @@ Pi stores configuration in `~/.pi/agent/`. Key files:
 | `~/.pi/agent/prompts/` | Prompt templates |
 
 These are read from your host's `~/.pi` directory when you run the container.
+
+## Troubleshooting: `EACCES` in `/home/node/.pi/agent/...`
+
+If you see errors like:
+
+```text
+EACCES: permission denied, mkdir '/home/node/.pi/agent/sessions/...'
+```
+
+it usually means your host `~/.pi` directory is owned by a different user than the one running `run-pi.sh`.
+
+Fix ownership on the host:
+
+```bash
+sudo chown -R "$(id -u)":"$(id -g)" ~/.pi
+```
 
 ## Customization
 
