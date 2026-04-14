@@ -24,6 +24,7 @@ set -e
 IMAGE="${PI_DOCKER_IMAGE:-pi-agent:latest}"
 CONTAINER_NAME="pi-agent-$$"
 CONTAINER_ENGINE="${PI_CONTAINER_ENGINE:-podman}"
+DEFAULT_AGENT_DIR="/workspace/.pi/agent"
 
 # Color output
 RED='\033[0;31m'
@@ -109,7 +110,7 @@ DOCKER_ARGS=(
     --user "$USER_UID:$USER_GID"
     --env "USER=$USER_NAME"
     --env "HOME=/home/node"
-    --env "PI_CODING_AGENT_DIR=/home/node/.pi/agent"
+    --env "PI_CODING_AGENT_DIR=$DEFAULT_AGENT_DIR"
     --workdir /workspace
     --network host
 )
@@ -201,16 +202,9 @@ collect_symlink_mounts() {
 
 # Mount pi configuration directories
 if [[ "$MOUNT_PI" == "true" ]]; then
-    # Ensure host config directories exist and are writable by the current user.
-    # This avoids EACCES errors inside the container when Pi creates lock/session files.
-    mkdir -p "$USER_HOME/.pi/agent/sessions"
-    if [[ ! -w "$USER_HOME/.pi/agent" ]]; then
-        echo -e "${RED}Error: $USER_HOME/.pi/agent is not writable by user $(whoami).${NC}" >&2
-        echo -e "${YELLOW}Fix with: sudo chown -R $(id -u):$(id -g) \"$USER_HOME/.pi\"${NC}" >&2
-        exit 1
-    fi
-
     if [[ -d "$USER_HOME/.pi" ]]; then
+        # Optional: mount host ~/.pi for manual access/migration of auth/settings.
+        # Pi runtime state defaults to /workspace/.pi/agent unless PI_CODING_AGENT_DIR is overridden.
         DOCKER_ARGS+=(-v "$USER_HOME/.pi:/home/node/.pi")
         # Find and mount any symlinks recursively under ~/.pi
         collect_symlink_mounts "$USER_HOME/.pi" "/home/node/.pi"

@@ -87,7 +87,7 @@ Options:
 | `ANTHROPIC_API_KEY` | Anthropic API key |
 | `OPENAI_API_KEY` | OpenAI API key |
 | `GOOGLE_API_KEY` | Google API key |
-| `PI_CODING_AGENT_DIR` | Override Pi config directory (default: `~/.pi/agent`) |
+| `PI_CODING_AGENT_DIR` | Override Pi config directory (default: `/workspace/.pi/agent`) |
 
 ## What's Mounted
 
@@ -101,7 +101,16 @@ Options:
 
 ## Pi Configuration
 
-Pi stores configuration in `~/.pi/agent/`. Key files:
+By default, this wrapper stores Pi runtime state in `/workspace/.pi/agent` (inside your mounted project),
+which avoids host home-directory permission issues.
+
+If you want to force host-based config, set:
+
+```bash
+PI_CODING_AGENT_DIR=/home/node/.pi/agent ./run-pi.sh
+```
+
+Pi stores configuration in the selected `PI_CODING_AGENT_DIR`. Key files:
 
 | Path | Purpose |
 |------|---------|
@@ -114,7 +123,7 @@ Pi stores configuration in `~/.pi/agent/`. Key files:
 | `~/.pi/agent/themes/` | Custom themes |
 | `~/.pi/agent/prompts/` | Prompt templates |
 
-These are read from your host's `~/.pi` directory when you run the container.
+The host `~/.pi` directory is still mounted (when present) for optional manual migration/access.
 
 ## Troubleshooting: `EACCES` in `/home/node/.pi/agent/...`
 
@@ -124,7 +133,8 @@ If you see errors like:
 EACCES: permission denied, mkdir '/home/node/.pi/agent/sessions/...'
 ```
 
-it usually means your host `~/.pi` directory is owned by a different user than the one running `run-pi.sh`.
+If you still use `PI_CODING_AGENT_DIR=/home/node/.pi/agent`, it usually means your host `~/.pi` directory
+is owned by a different user than the one running `run-pi.sh`.
 
 Fix ownership on the host:
 
@@ -132,8 +142,7 @@ Fix ownership on the host:
 sudo chown -R "$(id -u)":"$(id -g)" ~/.pi
 ```
 
-On SELinux-enabled systems (common with Podman), bind-mount writes can also fail with `EACCES`.
-`run-pi.sh` now runs Podman with `--security-opt label=disable` by default to avoid this issue.
+To avoid all host-home permission issues, use the wrapper default (`/workspace/.pi/agent`) and do not override `PI_CODING_AGENT_DIR`.
 
 ## Customization
 
