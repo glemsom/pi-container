@@ -229,4 +229,4 @@ fi
 
 # Run pi in container through bash (login shell to source ~/.bashrc for leanctx aliases)
 # First run lean-ctx doctor to verify lean-ctx is healthy, then start dashboard in background and run pi
-exec docker run "${DOCKER_ARGS[@]}" "$IMAGE" bash -l -c "pi ${PI_ARGS[*]}"
+exec podman run "${DOCKER_ARGS[@]}" "$IMAGE" bash -l -c "pi ${PI_ARGS[*]}"
