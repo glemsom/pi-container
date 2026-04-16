@@ -156,6 +156,7 @@ for env_var in \
     CEREBRAS_API_KEY \
     XAI_API_KEY \
     OPENROUTER_API_KEY \
+    CONTEXT7_API_KEY \
     HF_TOKEN \
     GH_TOKEN \
     GITHUB_TOKEN \
