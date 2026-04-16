@@ -42,7 +42,7 @@ RUN npm install -g @mjakl/pi-subagent
 
 RUN touch /home/node/.bashrc && lean-ctx setup
 
-RUN npx ctx7 setup --universal --cli --yes
+RUN npm install -g ctx7
 
 WORKDIR /workspace
 RUN lean-ctx init --agent pi
