@@ -115,6 +115,9 @@ USER_GID=$(id -g)
 USER_NAME=$(whoami)
 USER_HOME="$HOME"
 
+# Detect the docker socket GID from the host (socket is owned by root:GID)
+DOCKER_SOCKET_GID=$(stat -c '%g' /var/run/docker.sock 2>/dev/null || echo "")
+
 # Build docker run arguments
 DOCKER_ARGS=(
     --rm
@@ -122,6 +125,7 @@ DOCKER_ARGS=(
     --tty
     --name "$CONTAINER_NAME"
     --user 1000:1000
+    --group-add "$DOCKER_SOCKET_GID"
     --env "USER=$USER_NAME"
     --env "HOME=/home/node"
     --env "PI_CODING_AGENT_DIR=/home/node/.pi/agent"
@@ -178,6 +182,9 @@ fi
 # Mount current working directory
 HOST_CWD="$(pwd)"
 DOCKER_ARGS+=(-v "$HOST_CWD:/workspace")
+
+# Mount Docker socket for host docker access
+DOCKER_ARGS+=(-v "/var/run/docker.sock:/var/run/docker.sock")
 
 # Recursively find and mount symlinks in a directory
 # Args: $1=host_path $2=container_path

@@ -20,6 +20,9 @@ RUN curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | d
     && apt-get install gh \
     && rm -rf /etc/apt/sources.list.d/github-cli.list
 
+# Install Docker CLI for host docker access
+RUN apt-get update && apt-get install -y docker.io && rm -rf /var/lib/apt/lists/*
+
 ENV PATH="/home/node/.local/bin:$PATH"
 
 RUN mkdir -p /home/node/.pi/agent
