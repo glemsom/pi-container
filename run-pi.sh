@@ -103,8 +103,8 @@ done
 # Rebuild image if requested
 if [[ "$REBUILD" == "true" ]]; then
     echo -e "${GREEN}Rebuilding Docker image...${NC}"
-    # Get the directory where this script is located
-    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    # Get the directory where this script is located (resolve symlinks to get actual script location)
+    SCRIPT_DIR="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)"
     docker build -t pi-agent:latest "$SCRIPT_DIR"
     echo -e "${GREEN}Image rebuilt successfully!${NC}"
 fi
