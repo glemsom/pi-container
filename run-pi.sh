@@ -41,6 +41,7 @@ Arguments:
 
 Options:
     -h, --help         Show this help message
+    -u, --update        Rebuild Docker image, then run pi
     -i, --image IMAGE  Docker image to use (default: pi-agent:latest)
     --no-mount-pi      Don't mount ~/.pi configuration
     --verbose          Show docker commands being executed
@@ -49,6 +50,7 @@ Options:
 Examples:
     $(basename "$0")                                    # Interactive mode
     $(basename "$0") "List files in src/"               # Run with prompt
+    $(basename "$0") --update                            # Rebuild image, then run
     pi-container -i my-custom-image "Hello"             # Custom image
     PI_API_KEY=sk-ant-... $(basename "$0") "Hello"       # Set API key
 EOF
@@ -58,6 +60,7 @@ EOF
 # Parse arguments
 MOUNT_PI=true
 VERBOSE=false
+REBUILD=false
 PI_ARGS=()
 
 while [[ $# -gt 0 ]]; do
@@ -77,6 +80,10 @@ while [[ $# -gt 0 ]]; do
             VERBOSE=true
             shift
             ;;
+        -u|--update)
+            REBUILD=true
+            shift
+            ;;
         --)
             shift
             PI_ARGS+=("$@")
@@ -92,6 +99,15 @@ while [[ $# -gt 0 ]]; do
             ;;
     esac
 done
+
+# Rebuild image if requested
+if [[ "$REBUILD" == "true" ]]; then
+    echo -e "${GREEN}Rebuilding Docker image...${NC}"
+    # Get the directory where this script is located
+    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    docker build -t pi-agent:latest "$SCRIPT_DIR"
+    echo -e "${GREEN}Image rebuilt successfully!${NC}"
+fi
 
 # Get current user info for correct UID/GID in container
 USER_UID=$(id -u)
