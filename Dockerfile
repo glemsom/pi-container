@@ -79,7 +79,7 @@ RUN touch /home/node/.bashrc && lean-ctx setup
 RUN npm install -g ctx7
 
 # Copy entrypoint script (before USER change, as root)
-COPY --chmod=755 entrypoint.sh /entrypoint.sh
+COPY entrypoint.sh /entrypoint.sh
 
 WORKDIR /workspace
 RUN lean-ctx init --agent pi
