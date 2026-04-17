@@ -40,13 +40,13 @@ Arguments:
     prompt              Optional initial prompt to send to pi
 
  Options:
-     -h, --help         Show this help message
-     -u, --update        Rebuild Docker image, then run pi
-     -i, --image IMAGE  Docker image to use (default: pi-agent:latest)
-     --no-mount-pi      Don't mount ~/.pi configuration
-     --no-mcp-host-config  Use container's MCP config instead of host's
-     --verbose          Show docker commands being executed
-     --                 Pass through arguments to pi
+      -h, --help         Show this help message
+      -u, --update        Rebuild Docker image, then run pi
+      -i, --image IMAGE  Docker image to use (default: pi-agent:latest)
+      --no-mount-pi      Don't mount ~/.pi extensions/skills/themes/prompts (full isolation)
+      --no-mcp-host-config  Reset MCP config to container defaults (overwrite any existing)
+      --verbose          Show docker commands being executed
+      --                 Pass through arguments to pi
 
 Examples:
     $(basename "$0")                                    # Interactive mode
