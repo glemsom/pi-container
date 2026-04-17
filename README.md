@@ -183,7 +183,7 @@ The container comes with these packages pre-installed:
 - `@aliou/pi-guardrails` - Guardrails plugin
 - `@mjakl/pi-subagent` - Subagent plugin
 - `ctx7` - Context management
-- `@mariozechner/pi-mcp-adapter` - MCP adapter for Pi
+- `pi-mcp-adapter` - MCP adapter for Pi
 - `@upstash/context7-mcp` - Context7 MCP server for documentation
 - `lean-ctx init --agent pi` - Initialized for pi agent
 
