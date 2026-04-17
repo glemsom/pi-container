@@ -34,26 +34,8 @@ RUN mkdir /workspace
 RUN chown -R node:node /home/node/.pi
 RUN chown -R node:node /workspace
 
-USER node
-
-RUN npm config set prefix /home/node/.local
-
-RUN npm install -g @mariozechner/pi-coding-agent
-RUN npm install -g lean-ctx-bin
-RUN npm install -g @aliou/pi-guardrails
-RUN npm install -g @mjakl/pi-subagent
-
-# Install MCP servers
-RUN npm install -g @upstash/context7-mcp
-
-# Install Pi extensions
-RUN pi install npm:@mariozechner/pi-mcp-adapter
-
-RUN touch /home/node/.bashrc && lean-ctx setup
-
-RUN npm install -g ctx7
-
 # Store default MCP configuration at a fixed location (not under ~/.pi to avoid mount conflicts)
+# Must run as root before USER change
 RUN mkdir -p /etc/pi-mcp && \
     cat > /etc/pi-mcp/default.json << 'EOF'
 {
@@ -77,9 +59,27 @@ RUN mkdir -p /etc/pi-mcp && \
 }
 EOF
 
-# Copy entrypoint script
-COPY entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh
+USER node
+
+RUN npm config set prefix /home/node/.local
+
+RUN npm install -g @mariozechner/pi-coding-agent
+RUN npm install -g lean-ctx-bin
+RUN npm install -g @aliou/pi-guardrails
+RUN npm install -g @mjakl/pi-subagent
+
+# Install MCP servers
+RUN npm install -g @upstash/context7-mcp
+
+# Install Pi extensions
+RUN pi install npm:pi-mcp-adapter
+
+RUN touch /home/node/.bashrc && lean-ctx setup
+
+RUN npm install -g ctx7
+
+# Copy entrypoint script (before USER change, as root)
+COPY --chmod=755 entrypoint.sh /entrypoint.sh
 
 WORKDIR /workspace
 RUN lean-ctx init --agent pi
