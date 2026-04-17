@@ -74,16 +74,8 @@ while [[ $# -gt 0 ]]; do
             IMAGE="$2"
             shift 2
             ;;
-    --no-mount-pi)
+         --no-mount-pi)
             MOUNT_PI=false
-            shift
-            ;;
-    --no-mcp-host-config)
-            NO_MCP_HOST_CONFIG=true
-            shift
-            ;;
-    --verbose)
-            VERBOSE=true
             shift
             ;;
         --no-mcp-host-config)
