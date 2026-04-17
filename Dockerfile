@@ -31,11 +31,15 @@ ENV BASH_ENV="/home/node/.lean-ctx/env.sh"
 RUN mkdir -p /home/node/.pi/agent/extensions \
                 /home/node/.pi/agent/skills \
                 /home/node/.pi/agent/themes \
-                /home/node/.pi/agent/prompts
+                /home/node/.pi/agent/prompts \
+                /home/node/.pi/agent/cache
 RUN mkdir /workspace
 
 RUN chown -R node:node /home/node/.pi
 RUN chown -R node:node /workspace
+
+# Copy Kilo Gateway extension
+COPY kilo-gateway.ts /home/node/.pi/agent/extensions/kilo-gateway.ts
 
 # Declare volume for lean-ctx data persistence
 # Use: docker run -v /path/on/host:/home/node/.lean-ctx <image>
@@ -71,7 +75,7 @@ USER node
 RUN npm config set prefix /home/node/.local
 
 # Install npm packages with pinned versions for reproducibility
-RUN npm install -g \
+RUN npm install -g --silent --no-audit \
     @mariozechner/pi-coding-agent@0.67.6 \
     lean-ctx-bin@3.2.2 \
     @mjakl/pi-subagent@1.4.1 \
@@ -82,7 +86,7 @@ RUN npm install -g \
 COPY entrypoint.sh /entrypoint.sh
 
 WORKDIR /workspace
-RUN lean-ctx init --agent pi
+RUN lean-ctx init --agent pi 2>/dev/null
 
 
 

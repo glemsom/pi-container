@@ -185,6 +185,40 @@ The container comes with these packages pre-installed:
 - `@upstash/context7-mcp` - Context7 MCP server for documentation
 - `lean-ctx init --agent pi` - Initialized for pi agent
 
+### Pre-installed Extensions
+
+The container includes these extensions in `/home/node/.pi/agent/extensions/`:
+
+| Extension | Description |
+|-----------|-------------|
+| `kilo-gateway.ts` | Kilo Gateway provider - dynamically loads models from Kilo API |
+
+#### Kilo Gateway
+
+The Kilo Gateway extension registers `kilo` as a new model provider, enabling access to models from [Kilo AI](https://kilo.ai).
+
+**Features:**
+- Registers provider with default "kilo-auto/free" model
+- Caches models locally for 7 days
+- `/kilo-refresh` command to fetch latest models from API
+
+**Usage:**
+
+```bash
+# Set your Kilo API token
+export KILO_API_TOKEN=your-token-here
+
+# Run pi with the extension (auto-loaded)
+./run-pi.sh
+
+# Inside pi, refresh models from Kilo API
+/kilo-refresh
+```
+
+Then use `/model kilo` to select a Kilo provider model.
+
+**Note:** You need a Kilo API token. Get one at [kilo.ai](https://kilo.ai).
+
 ## MCP Server Configuration
 
 Pi supports MCP (Model Context Protocol) servers via the pi-mcp-adapter extension. The container includes `lean-ctx` and `context7` pre-configured.
