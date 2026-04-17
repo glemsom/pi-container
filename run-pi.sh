@@ -233,7 +233,7 @@ collect_symlink_mounts() {
 # MCP config is container-managed to ensure lean-ctx and context7 are available.
 if [[ "$MOUNT_PI" == "true" ]]; then
     # Mount individual agent subdirectories (not the entire ~/.pi to avoid overriding container MCP config)
-    local pi_agent_dir="$USER_HOME/.pi/agent"
+    pi_agent_dir="$USER_HOME/.pi/agent"
     
     # extensions — Pi extensions/plugins
     if [[ -d "$pi_agent_dir/extensions" ]]; then
