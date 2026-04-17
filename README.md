@@ -113,8 +113,6 @@ Additional API keys supported: Azure OpenAI, AWS, Mistral, Groq, Cerebras, xAI, 
 | `~/.config/gh` | `/home/node/.config/gh` | GitHub CLI token |
 | `/var/run/docker.sock` | `/var/run/docker.sock` | Docker socket (for host docker access) |
 
-Note: `~/.npmrc` is NOT mounted - host config often has paths that break in the container.
-
 ## Pi Configuration
 
 Pi stores configuration in `~/.pi/agent/`. Key files:
