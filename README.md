@@ -177,12 +177,11 @@ RUN npm install -g @mariozechner/pi-coding-agent
 ### Installed Dependencies
 
 The container comes with these packages pre-installed:
-- `@mariozechner/pi-coding-agent` - The Pi coding agent
-- `lean-ctx-bin` - Lean context management with MCP server
-- `@mjakl/pi-subagent` - Subagent plugin
-- `ctx7` - Context management
-- `pi-mcp-adapter` - MCP adapter for Pi
-- `@upstash/context7-mcp` - Context7 MCP server for documentation
+- `@mariozechner/pi-coding-agent` (v0.67.6) - The Pi coding agent
+- `lean-ctx-bin` (v3.2.2) - Lean context management with MCP server
+- `@mjakl/pi-subagent` (v1.4.1) - Subagent plugin
+- `ctx7` (v0.3.13) - Context management
+- `@upstash/context7-mcp` (v2.1.8) - Context7 MCP server for documentation
 - `lean-ctx init --agent pi` - Initialized for pi agent
 
 ### Pre-installed Extensions
@@ -316,9 +315,12 @@ docker run --rm -it --entrypoint /bin/bash pi-agent:latest
 
 ```
 .
-├── Dockerfile      # Docker image definition (Node.js 25, pi + plugins)
-├── run-pi.sh      # Wrapper script to run pi in a container
-└── README.md      # This file
+├── Dockerfile                   # Docker image definition (Node.js 25, pi + plugins)
+├── run-pi.sh                   # Wrapper script to run pi in a container
+├── kilo-gateway.ts             # Kilo Gateway extension for kilo.ai models
+├── lean-ctx-dashboard.sh       # Manage lean-ctx dashboard container
+├── entrypoint.sh               # Container entrypoint script
+└── README.md                   # This file
 ```
 
 ## See Also
