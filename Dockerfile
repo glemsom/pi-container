@@ -39,6 +39,8 @@ RUN npm install -g @mariozechner/pi-coding-agent
 RUN npm install -g lean-ctx-bin
 RUN npm install -g @aliou/pi-guardrails
 RUN npm install -g @mjakl/pi-subagent
+RUN npm install -g @mariozechner/pi-mcp-adapter
+RUN npm install -g @context7/mcp
 
 RUN touch /home/node/.bashrc && lean-ctx setup
 

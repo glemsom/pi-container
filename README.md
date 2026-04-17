@@ -93,7 +93,7 @@ Options:
 | `ANTHROPIC_API_KEY` | Anthropic API key |
 | `OPENAI_API_KEY` | OpenAI API key |
 | `GOOGLE_API_KEY` | Google API key |
-| `CONTEXT7_API_KEY` | Context7 API key |
+| `CONTEXT7_API_KEY` | Context7 API key (for documentation MCP) |
 | `GH_TOKEN` / `GITHUB_TOKEN` | GitHub token |
 | `PI_CODING_AGENT_DIR` | Override Pi config directory (default: `~/.pi/agent`) |
 | `PI_SKIP_VERSION_CHECK` | Skip version check |
@@ -159,11 +159,68 @@ RUN npm install -g @mariozechner/pi-coding-agent
 
 The container comes with these packages pre-installed:
 - `@mariozechner/pi-coding-agent` - The Pi coding agent
-- `lean-ctx-bin` - Lean context management
+- `lean-ctx-bin` - Lean context management with MCP server
 - `@aliou/pi-guardrails` - Guardrails plugin
 - `@mjakl/pi-subagent` - Subagent plugin
 - `ctx7` - Context management
+- `@mariozechner/pi-mcp-adapter` - MCP adapter for Pi
+- `@context7/mcp` - Context7 MCP server for documentation
 - `lean-ctx init --agent pi` - Initialized for pi agent
+
+## MCP Server Configuration
+
+Pi now supports MCP (Model Context Protocol) servers via the pi-mcp-adapter. Configure MCP servers in `~/.pi/agent/mcp.json` on your host machine (mounted into the container).
+
+### Example Configuration
+
+Create `~/.pi/agent/mcp.json`:
+
+```json
+{
+  "settings": {
+    "toolPrefix": "none",
+    "idleTimeout": 10
+  },
+  "mcpServers": {
+    "lean-ctx": {
+      "command": "lean-ctx",
+      "lifecycle": "lazy"
+    },
+    "context7": {
+      "command": "npx",
+      "args": ["-y", "@context7/mcp"],
+      "env": {
+        "CONTEXT7_API_KEY": "${CONTEXT7_API_KEY}"
+      },
+      "lifecycle": "lazy"
+    }
+  }
+}
+```
+
+### Available MCP Servers
+
+| Server | Purpose | Configuration |
+|--------|---------|--------------|
+| `lean-ctx` | Token-efficient context management (42 tools) | `command: "lean-ctx"` |
+| `context7` | Up-to-date library documentation (9000+ libraries) | `npx -y @context7/mcp` (requires `CONTEXT7_API_KEY`) |
+
+### Usage
+
+Once configured, use MCP tools in Pi:
+
+- `mcp({ search: "screenshot" })` — Search available tools
+- `mcp({ describe: "ctx_read" })` — Describe a specific tool
+- `mcp({ tool: "ctx_read", args: '{"path": "file.rs"}' })` — Call an MCP tool
+- `/mcp` — Interactive MCP panel in Pi
+
+Set your Context7 API key as an environment variable:
+
+```bash
+export CONTEXT7_API_KEY=your_api_key_here
+```
+
+The `run-pi.sh` script automatically forwards this variable into the container.
 
 ### Using a Custom Image
 
@@ -176,6 +233,69 @@ Or set the environment variable:
 ```bash
 PI_DOCKER_IMAGE=my-custom-pi ./run-pi.sh
 ```
+
+## MCP Server Configuration
+
+Pi supports MCP (Model Context Protocol) servers via the pi-mcp-adapter extension. Configure servers in `~/.pi/agent/mcp.json` on your host (mounted to the container).
+
+### Pre-installed MCP Servers
+
+The container includes:
+
+| Server | Tools | Description |
+|--------|-------|-------------|
+| `lean-ctx` | 42 tools | Token-efficient context management, compression, and project intelligence |
+| `context7` | 2 tools | Up-to-date documentation for 9000+ libraries |
+
+### Configuration Example
+
+Create `~/.pi/agent/mcp.json`:
+
+```json
+{
+  "settings": {
+    "toolPrefix": "none",
+    "idleTimeout": 10
+  },
+  "mcpServers": {
+    "lean-ctx": {
+      "command": "lean-ctx",
+      "lifecycle": "lazy"
+    },
+    "context7": {
+      "command": "npx",
+      "args": ["-y", "@context7/mcp"],
+      "env": {
+        "CONTEXT7_API_KEY": "${CONTEXT7_API_KEY}"
+      },
+      "lifecycle": "lazy"
+    }
+  }
+}
+```
+
+### Context7 Setup
+
+1. Get an API key from [context7.com/dashboard](https://context7.com/dashboard)
+2. Set it as an environment variable:
+
+```bash
+export CONTEXT7_API_KEY=your_key_here
+```
+
+The `run-pi.sh` script forwards this automatically. Get your key at [context7.com/dashboard](https://context7.com/dashboard).
+
+### Using MCP Tools
+
+In Pi, interact with MCP servers:
+
+- `mcp({ server: "lean-ctx" })` — Connect to lean-ctx
+- `mcp({ search: "read file" })` — Search all tools (MCP + Pi)
+- `mcp({ describe: "ctx_read" })` — Describe a specific tool
+- `mcp({ tool: "ctx_read", args: '{"path": "src/main.rs", "mode": "full"}' })` — Call a tool
+- `/mcp` — Open interactive MCP panel
+
+MCP servers are lazy by default — they connect only when you first call a tool, and disconnect after 10 minutes of inactivity.
 
 ## Development
 
