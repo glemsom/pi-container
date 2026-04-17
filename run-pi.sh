@@ -278,6 +278,11 @@ if [[ "$MOUNT_PI" == "true" ]]; then
     if [[ -d "$USER_HOME/.config/gh" ]]; then
         DOCKER_ARGS+=(-v "$USER_HOME/.config/gh:/home/node/.config/gh:ro")
     fi
+
+    # ~/.lean-ctx -> /home/node/.lean-ctx (shared context between host and container)
+    if [[ -d "$USER_HOME/.lean-ctx" ]]; then
+        DOCKER_ARGS+=(-v "$USER_HOME/.lean-ctx:/home/node/.lean-ctx")
+    fi
 fi
 
 # Show docker command if verbose
