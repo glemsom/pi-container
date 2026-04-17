@@ -66,7 +66,7 @@ Or authenticate interactively inside the container:
 
 The wrapper script handles:
 - Mounting your working directory to `/workspace`
-- Mounting Pi extensions, skills, themes, and prompts from `~/.pi/agent/` (if present, read-only)
+- Mounting Pi skills, themes, and prompts from `~/.pi/agent/` (if present, read-only)
 - Mounting shared skills (`~/.agents`)
 - Forwarding necessary environment variables
 - Setting correct UID/GID for file ownership
@@ -119,7 +119,6 @@ Additional API keys supported: Azure OpenAI, AWS, Mistral, Groq, Cerebras, xAI, 
 | Host Path | Container Path | Purpose |
 |-----------|----------------|---------|
 | `$PWD` | `/workspace` | Your working directory (pi's cwd) |
-| `~/.pi/agent/extensions` | `/home/node/.pi/agent/extensions` | Pi extensions (read-only) |
 | `~/.pi/agent/skills` | `/home/node/.pi/agent/skills` | Custom Pi skills (read-only) |
 | `~/.pi/agent/themes` | `/home/node/.pi/agent/themes` | UI themes (read-only) |
 | `~/.pi/agent/prompts` | `/home/node/.pi/agent/prompts` | Prompt templates (read-only) |
@@ -142,7 +141,6 @@ Pi stores configuration in `~/.pi/agent/`. Key files:
 | `auth.json` | Authentication tokens | Container-managed (use env vars for API keys) |
 | `models.json` | Custom model configurations | Container |
 | `sessions/` | Session history | Container |
-| `extensions/` | Custom extensions | **Host-mounted** (if present) |
 | `skills/` | Custom skills | **Host-mounted** (if present) |
 | `themes/` | Custom themes | **Host-mounted** (if present) |
 | `prompts/` | Prompt templates | **Host-mounted** (if present) |
@@ -181,7 +179,6 @@ RUN npm install -g @mariozechner/pi-coding-agent
 The container comes with these packages pre-installed:
 - `@mariozechner/pi-coding-agent` - The Pi coding agent
 - `lean-ctx-bin` - Lean context management with MCP server
-- `@aliou/pi-guardrails` - Guardrails plugin
 - `@mjakl/pi-subagent` - Subagent plugin
 - `ctx7` - Context management
 - `pi-mcp-adapter` - MCP adapter for Pi
@@ -194,7 +191,7 @@ Pi supports MCP (Model Context Protocol) servers via the pi-mcp-adapter extensio
 
 ### How MCP Works in the Container
 
-Since only selective subdirectories from `~/.pi/agent` are mounted (extensions, skills, themes, prompts), MCP configuration is **container-managed**:
+Since only selective subdirectories from `~/.pi/agent` are mounted (skills, themes, prompts), MCP configuration is **container-managed**:
 
 | Scenario | Behavior |
 |----------|----------|

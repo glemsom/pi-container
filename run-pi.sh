@@ -43,7 +43,7 @@ Arguments:
       -h, --help         Show this help message
       -u, --update        Rebuild Docker image, then run pi
       -i, --image IMAGE  Docker image to use (default: pi-agent:latest)
-      --no-mount-pi      Don't mount ~/.pi extensions/skills/themes/prompts (full isolation)
+      --no-mount-pi      Don't mount ~/.pi skills/themes/prompts (full isolation)
       --no-mcp-host-config  Reset MCP config to container defaults (overwrite any existing)
       --verbose          Show docker commands being executed
       --                 Pass through arguments to pi
@@ -229,17 +229,11 @@ collect_symlink_mounts() {
 }
 
 # Mount pi configuration directories selectively
-# Only mount user extensions, skills, themes, and prompts.
+# Only mount user skills, themes, and prompts (extensions are container-managed).
 # MCP config is container-managed to ensure lean-ctx and context7 are available.
 if [[ "$MOUNT_PI" == "true" ]]; then
     # Mount individual agent subdirectories (not the entire ~/.pi to avoid overriding container MCP config)
     pi_agent_dir="$USER_HOME/.pi/agent"
-    
-    # extensions — Pi extensions/plugins
-    if [[ -d "$pi_agent_dir/extensions" ]]; then
-        DOCKER_ARGS+=(-v "$pi_agent_dir/extensions:/home/node/.pi/agent/extensions:ro")
-        collect_symlink_mounts "$pi_agent_dir/extensions" "/home/node/.pi/agent/extensions"
-    fi
     
     # skills — Custom Pi skills
     if [[ -d "$pi_agent_dir/skills" ]]; then
