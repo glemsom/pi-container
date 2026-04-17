@@ -208,7 +208,7 @@ The container's default MCP config is at `/etc/pi-mcp/default.json` and is copie
 
 | Server | Tools | Description |
 |--------|-------|-------------|
-| `lean-ctx` | 42 tools | Token-efficient context management, compression, and project intelligence |
+| `lean-ctx` | 46 tools | Token-efficient context management, compression, and project intelligence |
 | `context7` | 2 tools | Up-to-date documentation for 9000+ libraries (requires `CONTEXT7_API_KEY`) |
 
 ### Configuration
