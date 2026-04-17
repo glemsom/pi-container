@@ -35,6 +35,10 @@ RUN mkdir /workspace
 RUN chown -R node:node /home/node/.pi
 RUN chown -R node:node /workspace
 
+# Declare volume for lean-ctx data persistence
+# Use: docker run -v /path/on/host:/home/node/.lean-ctx <image>
+VOLUME /home/node/.lean-ctx
+
 # Store default MCP configuration at a fixed location (not under ~/.pi to avoid mount conflicts)
 # Must run as root before USER change
 RUN mkdir -p /etc/pi-mcp && \
