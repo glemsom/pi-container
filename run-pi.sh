@@ -287,5 +287,7 @@ if [[ "$VERBOSE" == "true" ]]; then
 fi
 
 # Run pi in container through bash (login shell to source ~/.bashrc for leanctx aliases)
-# First run lean-ctx doctor to verify lean-ctx is healthy, then start dashboard in background and run pi
-exec docker run "${DOCKER_ARGS[@]}" "$IMAGE" bash -c "lean-ctx dashboard &>/dev/null &  pi ${PI_ARGS[*]}"
+# Ensure lean-ctx dashboard container is running before starting pi
+SCRIPT_DIR="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)"
+"$SCRIPT_DIR/lean-ctx-dashboard.sh" start
+exec docker run "${DOCKER_ARGS[@]}" "$IMAGE" bash -c "pi ${PI_ARGS[*]}"
