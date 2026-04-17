@@ -289,4 +289,4 @@ fi
 # Ensure lean-ctx dashboard container is running before starting pi
 SCRIPT_DIR="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)"
 "$SCRIPT_DIR/lean-ctx-dashboard.sh" start
-exec docker run "${DOCKER_ARGS[@]}" "$IMAGE" bash -c "pi ${PI_ARGS[*]}"
+exec docker run "${DOCKER_ARGS[@]}" "$IMAGE" pi "${PI_ARGS[@]}"
