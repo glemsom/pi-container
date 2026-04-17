@@ -236,15 +236,38 @@ collect_symlink_mounts() {
     done
 }
 
-# Mount pi configuration directories
+# Mount pi configuration directories selectively
+# Only mount user extensions, skills, themes, and prompts.
+# MCP config is container-managed to ensure lean-ctx and context7 are available.
 if [[ "$MOUNT_PI" == "true" ]]; then
-    if [[ -d "$USER_HOME/.pi" ]]; then
-        DOCKER_ARGS+=(-v "$USER_HOME/.pi:/home/node/.pi")
-        # Find and mount any symlinks recursively under ~/.pi
-        collect_symlink_mounts "$USER_HOME/.pi" "/home/node/.pi"
+    # Mount individual agent subdirectories (not the entire ~/.pi to avoid overriding container MCP config)
+    local pi_agent_dir="$USER_HOME/.pi/agent"
+    
+    # extensions — Pi extensions/plugins
+    if [[ -d "$pi_agent_dir/extensions" ]]; then
+        DOCKER_ARGS+=(-v "$pi_agent_dir/extensions:/home/node/.pi/agent/extensions:ro")
+        collect_symlink_mounts "$pi_agent_dir/extensions" "/home/node/.pi/agent/extensions"
+    fi
+    
+    # skills — Custom Pi skills
+    if [[ -d "$pi_agent_dir/skills" ]]; then
+        DOCKER_ARGS+=(-v "$pi_agent_dir/skills:/home/node/.pi/agent/skills:ro")
+        collect_symlink_mounts "$pi_agent_dir/skills" "/home/node/.pi/agent/skills"
+    fi
+    
+    # themes — Pi UI themes
+    if [[ -d "$pi_agent_dir/themes" ]]; then
+        DOCKER_ARGS+=(-v "$pi_agent_dir/themes:/home/node/.pi/agent/themes:ro")
+        collect_symlink_mounts "$pi_agent_dir/themes" "/home/node/.pi/agent/themes"
+    fi
+    
+    # prompts — Custom prompt templates
+    if [[ -d "$pi_agent_dir/prompts" ]]; then
+        DOCKER_ARGS+=(-v "$pi_agent_dir/prompts:/home/node/.pi/agent/prompts:ro")
+        collect_symlink_mounts "$pi_agent_dir/prompts" "/home/node/.pi/agent/prompts"
     fi
 
-    # ~/.agents -> /home/node/.agents
+    # ~/.agents -> /home/node/.agents (shared skills location)
     if [[ -d "$USER_HOME/.agents" ]]; then
         DOCKER_ARGS+=(-v "$USER_HOME/.agents:/home/node/.agents:ro")
     fi

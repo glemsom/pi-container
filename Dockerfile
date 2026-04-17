@@ -25,7 +25,10 @@ RUN apt-get update && apt-get install -y docker.io && rm -rf /var/lib/apt/lists/
 
 ENV PATH="/home/node/.local/bin:$PATH"
 
-RUN mkdir -p /home/node/.pi/agent
+RUN mkdir -p /home/node/.pi/agent/extensions \
+                /home/node/.pi/agent/skills \
+                /home/node/.pi/agent/themes \
+                /home/node/.pi/agent/prompts
 RUN mkdir /workspace
 
 RUN chown -R node:node /home/node/.pi

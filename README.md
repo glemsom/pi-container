@@ -119,29 +119,36 @@ Additional API keys supported: Azure OpenAI, AWS, Mistral, Groq, Cerebras, xAI, 
 | Host Path | Container Path | Purpose |
 |-----------|----------------|---------|
 | `$PWD` | `/workspace` | Your working directory (pi's cwd) |
-| `~/.pi` | `/home/node/.pi` | Pi configuration (settings, themes, packages) |
+| `~/.pi/agent/extensions` | `/home/node/.pi/agent/extensions` | Pi extensions (read-only) |
+| `~/.pi/agent/skills` | `/home/node/.pi/agent/skills` | Custom Pi skills (read-only) |
+| `~/.pi/agent/themes` | `/home/node/.pi/agent/themes` | UI themes (read-only) |
+| `~/.pi/agent/prompts` | `/home/node/.pi/agent/prompts` | Prompt templates (read-only) |
 | `~/.agents` | `/home/node/.agents` | Shared skills location |
 | `~/.gitconfig` | `/home/node/.gitconfig` | Git configuration |
 | `~/.ssh` | `/home/node/.ssh` | SSH keys (for git operations) |
 | `~/.config/gh` | `/home/node/.config/gh` | GitHub CLI token |
 | `/var/run/docker.sock` | `/var/run/docker.sock` | Docker socket (for host docker access) |
 
+**Note:** Only selective subdirectories from `~/.pi/agent` are mounted to keep MCP configuration (`mcp.json`) and authentication (`auth.json`) container-managed. The container provides its own MCP config with `lean-ctx` and `context7` pre-configured.
+
 ## Pi Configuration
 
 Pi stores configuration in `~/.pi/agent/`. Key files:
 
-| Path | Purpose |
-|------|---------|
-| `~/.pi/agent/settings.json` | Global settings |
-| `~/.pi/agent/auth.json` | Authentication tokens |
-| `~/.pi/agent/models.json` | Custom model configurations |
-| `~/.pi/agent/sessions/` | Session history |
-| `~/.pi/agent/extensions/` | Custom extensions |
-| `~/.pi/agent/skills/` | Custom skills |
-| `~/.pi/agent/themes/` | Custom themes |
-| `~/.pi/agent/prompts/` | Prompt templates |
+| Path | Purpose | Source |
+|------|---------|--------|
+| `settings.json` | Global settings | Container default (can override via env) |
+| `auth.json` | Authentication tokens | Container-managed (use env vars for API keys) |
+| `models.json` | Custom model configurations | Container |
+| `sessions/` | Session history | Container |
+| `extensions/` | Custom extensions | **Host-mounted** (if present) |
+| `skills/` | Custom skills | **Host-mounted** (if present) |
+| `themes/` | Custom themes | **Host-mounted** (if present) |
+| `prompts/` | Prompt templates | **Host-mounted** (if present) |
+| `mcp.json` | MCP server configuration | **Container-managed** (lean-ctx, context7) |
 
-These are read from your host's `~/.pi` directory when you run the container.
+Only the highlighted subdirectories are mounted from your host `~/.pi/agent/`. All other configuration (including MCP servers) is managed inside the container to ensure the pre-installed tools are always available.
+
 The container runs as user 1000:1000 with home `/home/node`.
 
 ## Customization
