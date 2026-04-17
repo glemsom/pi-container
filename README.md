@@ -81,7 +81,6 @@ Options:
   -u, --update         Rebuild Docker image, then run pi
   -i, --image IMAGE    Docker image (default: pi-agent:latest)
   --no-mount-pi        Don't mount ~/.pi configuration (full isolation)
-   --no-mcp-host-config  Reset MCP config to container defaults (overwrite existing)
   --verbose            Show docker commands
   --                   Pass through arguments to pi
 ```
@@ -92,7 +91,6 @@ Options:
 ./run-pi.sh                                    # Interactive mode with host config
 ./run-pi.sh "List files in src/"              # Run with prompt
 ./run-pi.sh --update                           # Rebuild image, then run
-./run-pi.sh --no-mcp-host-config "Hello"      # Reset MCP config to defaults
 ./run-pi.sh --no-mount-pi "Hello"             # Full isolation (no host config)
 PI_API_KEY=sk-ant-... ./run-pi.sh "Hello"      # Set API key
 ```
@@ -110,7 +108,6 @@ PI_API_KEY=sk-ant-... ./run-pi.sh "Hello"      # Set API key
 | `PI_CODING_AGENT_DIR` | Override Pi config directory (default: `~/.pi/agent`) |
 | `PI_SKIP_VERSION_CHECK` | Skip version check |
 | `PI_CACHE_RETENTION` | Cache retention settings |
-| `PI_USE_CONTAINER_MCP` | Reset MCP config to container defaults on startup (internal, also via `--no-mcp-host-config` flag) |
 
 Additional API keys supported: Azure OpenAI, AWS, Mistral, Groq, Cerebras, xAI, OpenRouter, HuggingFace, Kimi, MiniMax
 
@@ -232,7 +229,6 @@ Since only selective subdirectories from `~/.pi/agent` are mounted (skills, them
 | Default (no `~/.pi` mounted) | Container uses built-in MCP config |
 | Selective `~/.pi/agent/*` mount | Container MCP config is always used |
 | Project `.pi/mcp.json` in workspace | Project config overrides container config |
-| `--no-mcp-host-config` flag | Resets MCP config to container defaults |
 
 The container's default MCP config is at `/etc/pi-mcp/default.json` and is copied to `/home/node/.pi/agent/mcp.json` at startup if needed.
 
