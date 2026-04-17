@@ -25,7 +25,10 @@ RUN apt-get update && apt-get install -y docker.io && rm -rf /var/lib/apt/lists/
 
 ENV PATH="/home/node/.local/bin:$PATH"
 
-RUN mkdir -p /home/node/.pi/agent
+RUN mkdir -p /home/node/.pi/agent/extensions \
+                /home/node/.pi/agent/skills \
+                /home/node/.pi/agent/themes \
+                /home/node/.pi/agent/prompts
 RUN mkdir /workspace
 
 RUN chown -R node:node /home/node/.pi
@@ -40,17 +43,51 @@ RUN npm install -g lean-ctx-bin
 RUN npm install -g @aliou/pi-guardrails
 RUN npm install -g @mjakl/pi-subagent
 
+# Install MCP servers
+RUN npm install -g @upstash/context7-mcp
+
+# Install Pi extensions
+RUN pi install npm:@mariozechner/pi-mcp-adapter
+
 RUN touch /home/node/.bashrc && lean-ctx setup
 
 RUN npm install -g ctx7
+
+# Store default MCP configuration at a fixed location (not under ~/.pi to avoid mount conflicts)
+RUN mkdir -p /etc/pi-mcp && \
+    cat > /etc/pi-mcp/default.json << 'EOF'
+{
+  "settings": {
+    "toolPrefix": "none",
+    "idleTimeout": 10
+  },
+  "mcpServers": {
+    "lean-ctx": {
+      "command": "lean-ctx",
+      "lifecycle": "lazy"
+    },
+    "context7": {
+      "command": "context7-mcp",
+      "env": {
+        "CONTEXT7_API_KEY": "${CONTEXT7_API_KEY}"
+      },
+      "lifecycle": "lazy"
+    }
+  }
+}
+EOF
+
+# Copy entrypoint script
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
 
 WORKDIR /workspace
 RUN lean-ctx init --agent pi
 
 
 
-# Use dumb-init to handle signals properly
-ENTRYPOINT ["dumb-init", "--"]
+# Use dumb-init to handle signals properly, then entrypoint for MCP bootstrap
+ENTRYPOINT ["dumb-init", "--", "/entrypoint.sh"]
 
 # Default command
 CMD ["pi"]

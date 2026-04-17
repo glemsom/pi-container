@@ -39,13 +39,14 @@ Run Pi agent inside an isolated container with your working directory mounted.
 Arguments:
     prompt              Optional initial prompt to send to pi
 
-Options:
-    -h, --help         Show this help message
-    -u, --update        Rebuild Docker image, then run pi
-    -i, --image IMAGE  Docker image to use (default: pi-agent:latest)
-    --no-mount-pi      Don't mount ~/.pi configuration
-    --verbose          Show docker commands being executed
-    --                 Pass through arguments to pi
+ Options:
+      -h, --help         Show this help message
+      -u, --update        Rebuild Docker image, then run pi
+      -i, --image IMAGE  Docker image to use (default: pi-agent:latest)
+      --no-mount-pi      Don't mount ~/.pi extensions/skills/themes/prompts (full isolation)
+      --no-mcp-host-config  Reset MCP config to container defaults (overwrite any existing)
+      --verbose          Show docker commands being executed
+      --                 Pass through arguments to pi
 
 Examples:
     $(basename "$0")                                    # Interactive mode
@@ -62,6 +63,7 @@ MOUNT_PI=true
 VERBOSE=false
 REBUILD=false
 PI_ARGS=()
+NO_MCP_HOST_CONFIG=false
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -74,6 +76,10 @@ while [[ $# -gt 0 ]]; do
             ;;
         --no-mount-pi)
             MOUNT_PI=false
+            shift
+            ;;
+        --no-mcp-host-config)
+            NO_MCP_HOST_CONFIG=true
             shift
             ;;
         --verbose)
@@ -140,6 +146,7 @@ for env_var in \
     PI_SKIP_VERSION_CHECK \
     PI_CACHE_RETENTION \
     PI_SHARE_VIEWER_URL \
+    PI_USE_CONTAINER_MCP \
     ANTHROPIC_API_KEY \
     ANTHROPIC_API_KEY_FILE \
     OPENAI_API_KEY \
@@ -180,6 +187,11 @@ if [[ -z "$GH_TOKEN" ]] && command -v gh >/dev/null 2>&1; then
     fi
 fi
 
+# If requested, use container's MCP config instead of host's
+if [[ "$NO_MCP_HOST_CONFIG" == "true" ]]; then
+    DOCKER_ARGS+=(--env "PI_USE_CONTAINER_MCP=true")
+fi
+
 # Mount current working directory
 HOST_CWD="$(pwd)"
 DOCKER_ARGS+=(-v "$HOST_CWD:/workspace")
@@ -216,15 +228,38 @@ collect_symlink_mounts() {
     done
 }
 
-# Mount pi configuration directories
+# Mount pi configuration directories selectively
+# Only mount user extensions, skills, themes, and prompts.
+# MCP config is container-managed to ensure lean-ctx and context7 are available.
 if [[ "$MOUNT_PI" == "true" ]]; then
-    if [[ -d "$USER_HOME/.pi" ]]; then
-        DOCKER_ARGS+=(-v "$USER_HOME/.pi:/home/node/.pi")
-        # Find and mount any symlinks recursively under ~/.pi
-        collect_symlink_mounts "$USER_HOME/.pi" "/home/node/.pi"
+    # Mount individual agent subdirectories (not the entire ~/.pi to avoid overriding container MCP config)
+    local pi_agent_dir="$USER_HOME/.pi/agent"
+    
+    # extensions — Pi extensions/plugins
+    if [[ -d "$pi_agent_dir/extensions" ]]; then
+        DOCKER_ARGS+=(-v "$pi_agent_dir/extensions:/home/node/.pi/agent/extensions:ro")
+        collect_symlink_mounts "$pi_agent_dir/extensions" "/home/node/.pi/agent/extensions"
+    fi
+    
+    # skills — Custom Pi skills
+    if [[ -d "$pi_agent_dir/skills" ]]; then
+        DOCKER_ARGS+=(-v "$pi_agent_dir/skills:/home/node/.pi/agent/skills:ro")
+        collect_symlink_mounts "$pi_agent_dir/skills" "/home/node/.pi/agent/skills"
+    fi
+    
+    # themes — Pi UI themes
+    if [[ -d "$pi_agent_dir/themes" ]]; then
+        DOCKER_ARGS+=(-v "$pi_agent_dir/themes:/home/node/.pi/agent/themes:ro")
+        collect_symlink_mounts "$pi_agent_dir/themes" "/home/node/.pi/agent/themes"
+    fi
+    
+    # prompts — Custom prompt templates
+    if [[ -d "$pi_agent_dir/prompts" ]]; then
+        DOCKER_ARGS+=(-v "$pi_agent_dir/prompts:/home/node/.pi/agent/prompts:ro")
+        collect_symlink_mounts "$pi_agent_dir/prompts" "/home/node/.pi/agent/prompts"
     fi
 
-    # ~/.agents -> /home/node/.agents
+    # ~/.agents -> /home/node/.agents (shared skills location)
     if [[ -d "$USER_HOME/.agents" ]]; then
         DOCKER_ARGS+=(-v "$USER_HOME/.agents:/home/node/.agents:ro")
     fi

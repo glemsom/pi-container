@@ -66,7 +66,7 @@ Or authenticate interactively inside the container:
 
 The wrapper script handles:
 - Mounting your working directory to `/workspace`
-- Mounting Pi configuration (`~/.pi`)
+- Mounting Pi extensions, skills, themes, and prompts from `~/.pi/agent/` (if present, read-only)
 - Mounting shared skills (`~/.agents`)
 - Forwarding necessary environment variables
 - Setting correct UID/GID for file ownership
@@ -77,12 +77,24 @@ The wrapper script handles:
 ./run-pi.sh [options] [prompt]
 
 Options:
-  -h, --help         Show help
-  -u, --update      Rebuild Docker image, then run pi
-  -i, --image IMAGE  Docker image (default: pi-agent:latest)
-  --no-mount-pi      Don't mount ~/.pi configuration
-  --verbose          Show docker commands
-  --                 Pass through arguments to pi
+  -h, --help           Show help
+  -u, --update         Rebuild Docker image, then run pi
+  -i, --image IMAGE    Docker image (default: pi-agent:latest)
+  --no-mount-pi        Don't mount ~/.pi configuration (full isolation)
+   --no-mcp-host-config  Reset MCP config to container defaults (overwrite existing)
+  --verbose            Show docker commands
+  --                   Pass through arguments to pi
+```
+
+### Examples
+
+```
+./run-pi.sh                                    # Interactive mode with host config
+./run-pi.sh "List files in src/"              # Run with prompt
+./run-pi.sh --update                           # Rebuild image, then run
+./run-pi.sh --no-mcp-host-config "Hello"      # Reset MCP config to defaults
+./run-pi.sh --no-mount-pi "Hello"             # Full isolation (no host config)
+PI_API_KEY=sk-ant-... ./run-pi.sh "Hello"      # Set API key
 ```
 
 ### Environment Variables
@@ -93,11 +105,12 @@ Options:
 | `ANTHROPIC_API_KEY` | Anthropic API key |
 | `OPENAI_API_KEY` | OpenAI API key |
 | `GOOGLE_API_KEY` | Google API key |
-| `CONTEXT7_API_KEY` | Context7 API key |
+| `CONTEXT7_API_KEY` | Context7 API key (for documentation MCP) |
 | `GH_TOKEN` / `GITHUB_TOKEN` | GitHub token |
 | `PI_CODING_AGENT_DIR` | Override Pi config directory (default: `~/.pi/agent`) |
 | `PI_SKIP_VERSION_CHECK` | Skip version check |
 | `PI_CACHE_RETENTION` | Cache retention settings |
+| `PI_USE_CONTAINER_MCP` | Reset MCP config to container defaults on startup (internal, also via `--no-mcp-host-config` flag) |
 
 Additional API keys supported: Azure OpenAI, AWS, Mistral, Groq, Cerebras, xAI, OpenRouter, HuggingFace, Kimi, MiniMax
 
@@ -106,29 +119,36 @@ Additional API keys supported: Azure OpenAI, AWS, Mistral, Groq, Cerebras, xAI, 
 | Host Path | Container Path | Purpose |
 |-----------|----------------|---------|
 | `$PWD` | `/workspace` | Your working directory (pi's cwd) |
-| `~/.pi` | `/home/node/.pi` | Pi configuration (settings, themes, packages) |
+| `~/.pi/agent/extensions` | `/home/node/.pi/agent/extensions` | Pi extensions (read-only) |
+| `~/.pi/agent/skills` | `/home/node/.pi/agent/skills` | Custom Pi skills (read-only) |
+| `~/.pi/agent/themes` | `/home/node/.pi/agent/themes` | UI themes (read-only) |
+| `~/.pi/agent/prompts` | `/home/node/.pi/agent/prompts` | Prompt templates (read-only) |
 | `~/.agents` | `/home/node/.agents` | Shared skills location |
 | `~/.gitconfig` | `/home/node/.gitconfig` | Git configuration |
 | `~/.ssh` | `/home/node/.ssh` | SSH keys (for git operations) |
 | `~/.config/gh` | `/home/node/.config/gh` | GitHub CLI token |
 | `/var/run/docker.sock` | `/var/run/docker.sock` | Docker socket (for host docker access) |
 
+**Note:** Only selective subdirectories from `~/.pi/agent` are mounted to keep MCP configuration (`mcp.json`) and authentication (`auth.json`) container-managed. The container provides its own MCP config with `lean-ctx` and `context7` pre-configured.
+
 ## Pi Configuration
 
 Pi stores configuration in `~/.pi/agent/`. Key files:
 
-| Path | Purpose |
-|------|---------|
-| `~/.pi/agent/settings.json` | Global settings |
-| `~/.pi/agent/auth.json` | Authentication tokens |
-| `~/.pi/agent/models.json` | Custom model configurations |
-| `~/.pi/agent/sessions/` | Session history |
-| `~/.pi/agent/extensions/` | Custom extensions |
-| `~/.pi/agent/skills/` | Custom skills |
-| `~/.pi/agent/themes/` | Custom themes |
-| `~/.pi/agent/prompts/` | Prompt templates |
+| Path | Purpose | Source |
+|------|---------|--------|
+| `settings.json` | Global settings | Container default (can override via env) |
+| `auth.json` | Authentication tokens | Container-managed (use env vars for API keys) |
+| `models.json` | Custom model configurations | Container |
+| `sessions/` | Session history | Container |
+| `extensions/` | Custom extensions | **Host-mounted** (if present) |
+| `skills/` | Custom skills | **Host-mounted** (if present) |
+| `themes/` | Custom themes | **Host-mounted** (if present) |
+| `prompts/` | Prompt templates | **Host-mounted** (if present) |
+| `mcp.json` | MCP server configuration | **Container-managed** (lean-ctx, context7) |
 
-These are read from your host's `~/.pi` directory when you run the container.
+Only the highlighted subdirectories are mounted from your host `~/.pi/agent/`. All other configuration (including MCP servers) is managed inside the container to ensure the pre-installed tools are always available.
+
 The container runs as user 1000:1000 with home `/home/node`.
 
 ## Customization
@@ -159,23 +179,86 @@ RUN npm install -g @mariozechner/pi-coding-agent
 
 The container comes with these packages pre-installed:
 - `@mariozechner/pi-coding-agent` - The Pi coding agent
-- `lean-ctx-bin` - Lean context management
+- `lean-ctx-bin` - Lean context management with MCP server
 - `@aliou/pi-guardrails` - Guardrails plugin
 - `@mjakl/pi-subagent` - Subagent plugin
 - `ctx7` - Context management
+- `@mariozechner/pi-mcp-adapter` - MCP adapter for Pi
+- `@upstash/context7-mcp` - Context7 MCP server for documentation
 - `lean-ctx init --agent pi` - Initialized for pi agent
 
-### Using a Custom Image
+## MCP Server Configuration
 
-```bash
-./run-pi.sh -i my-custom-pi "prompt"
+Pi supports MCP (Model Context Protocol) servers via the pi-mcp-adapter extension. The container includes `lean-ctx` and `context7` pre-configured.
+
+### How MCP Works in the Container
+
+Since only selective subdirectories from `~/.pi/agent` are mounted (extensions, skills, themes, prompts), MCP configuration is **container-managed**:
+
+| Scenario | Behavior |
+|----------|----------|
+| Default (no `~/.pi` mounted) | Container uses built-in MCP config |
+| Selective `~/.pi/agent/*` mount | Container MCP config is always used |
+| Project `.pi/mcp.json` in workspace | Project config overrides container config |
+| `--no-mcp-host-config` flag | Resets MCP config to container defaults |
+
+The container's default MCP config is at `/etc/pi-mcp/default.json` and is copied to `/home/node/.pi/agent/mcp.json` at startup if needed.
+
+### Pre-installed MCP Servers
+
+| Server | Tools | Description |
+|--------|-------|-------------|
+| `lean-ctx` | 42 tools | Token-efficient context management, compression, and project intelligence |
+| `context7` | 2 tools | Up-to-date documentation for 9000+ libraries (requires `CONTEXT7_API_KEY`) |
+
+### Configuration
+
+The container's default `~/.pi/agent/mcp.json`:
+
+```json
+{
+  "settings": {
+    "toolPrefix": "none",
+    "idleTimeout": 10
+  },
+  "mcpServers": {
+    "lean-ctx": {
+      "command": "lean-ctx",
+      "lifecycle": "lazy"
+    },
+    "context7": {
+      "command": "context7-mcp",
+      "env": {
+        "CONTEXT7_API_KEY": "${CONTEXT7_API_KEY}"
+      },
+      "lifecycle": "lazy"
+    }
+  }
+}
 ```
 
-Or set the environment variable:
+### Context7 Setup
+
+1. Get an API key from [context7.com/dashboard](https://context7.com/dashboard)
+2. Set it as an environment variable:
 
 ```bash
-PI_DOCKER_IMAGE=my-custom-pi ./run-pi.sh
+export CONTEXT7_API_KEY=your_key_here
 ```
+
+The `run-pi.sh` script automatically forwards this variable. Get your key at [context7.com/dashboard](https://context7.com/dashboard).
+
+### Usage
+
+In Pi, interact with MCP servers:
+
+- `mcp({ search: "read file" })` — Search all tools (MCP + Pi)
+- `mcp({ describe: "ctx_read" })` — Describe a specific tool
+- `mcp({ tool: "ctx_read", args: '{"path": "file.rs", "mode": "full"}' })` — Call a tool
+- `mcp({ connect: "lean-ctx" })` — Connect a server manually
+- `/mcp` — Open interactive MCP panel
+
+MCP servers are lazy by default — they connect only when you first call a tool, and disconnect after 10 minutes of inactivity.
 
 ## Development
 
