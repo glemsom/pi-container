@@ -2,6 +2,10 @@
 
 Run the [Pi coding agent](https://pi.dev) inside an isolated Docker container, with your working directory and configuration properly mounted.
 
+This repository contains:
+- `Dockerfile` - Docker image definition with Node.js 25, pi, and optional dependencies
+- `run-pi.sh` - Wrapper script to run pi in a container
+
 ## Why Use a Container?
 
 - **Isolation**: Pi runs in its own environment without polluting your host system
@@ -15,6 +19,8 @@ Run the [Pi coding agent](https://pi.dev) inside an isolated Docker container, w
 
 ```bash
 docker build -t pi-agent:latest .
+# Or use the wrapper to build and run:
+./run-pi.sh --update
 ```
 
 ### 2. Run Pi
@@ -72,6 +78,7 @@ The wrapper script handles:
 
 Options:
   -h, --help         Show help
+  -u, --update      Rebuild Docker image, then run pi
   -i, --image IMAGE  Docker image (default: pi-agent:latest)
   --no-mount-pi      Don't mount ~/.pi configuration
   --verbose          Show docker commands
@@ -86,18 +93,25 @@ Options:
 | `ANTHROPIC_API_KEY` | Anthropic API key |
 | `OPENAI_API_KEY` | OpenAI API key |
 | `GOOGLE_API_KEY` | Google API key |
+| `CONTEXT7_API_KEY` | Context7 API key |
+| `GH_TOKEN` / `GITHUB_TOKEN` | GitHub token |
 | `PI_CODING_AGENT_DIR` | Override Pi config directory (default: `~/.pi/agent`) |
+| `PI_SKIP_VERSION_CHECK` | Skip version check |
+| `PI_CACHE_RETENTION` | Cache retention settings |
+
+Additional API keys supported: Azure OpenAI, AWS, Mistral, Groq, Cerebras, xAI, OpenRouter, HuggingFace, Kimi, MiniMax
 
 ## What's Mounted
 
 | Host Path | Container Path | Purpose |
 |-----------|----------------|---------|
 | `$PWD` | `/workspace` | Your working directory (pi's cwd) |
-| `~/.pi` | `/home/pi/.pi` | Pi configuration (settings, themes, packages) |
-| `~/.agents` | `/home/pi/.agents` | Shared skills location |
-| `~/.npmrc` | `/home/pi/.npmrc` | NPM authentication (if exists) |
-| `~/.gitconfig` | `/home/pi/.gitconfig` | Git configuration |
-| `~/.ssh` | `/home/pi/.ssh` | SSH keys (for git operations) |
+| `~/.pi` | `/home/node/.pi` | Pi configuration (settings, themes, packages) |
+| `~/.agents` | `/home/node/.agents` | Shared skills location |
+| `~/.gitconfig` | `/home/node/.gitconfig` | Git configuration |
+| `~/.ssh` | `/home/node/.ssh` | SSH keys (for git operations) |
+| `~/.config/gh` | `/home/node/.config/gh` | GitHub CLI token |
+| `/var/run/docker.sock` | `/var/run/docker.sock` | Docker socket (for host docker access) |
 
 ## Pi Configuration
 
@@ -115,6 +129,7 @@ Pi stores configuration in `~/.pi/agent/`. Key files:
 | `~/.pi/agent/prompts/` | Prompt templates |
 
 These are read from your host's `~/.pi` directory when you run the container.
+The container runs as user 1000:1000 with home `/home/node`.
 
 ## Customization
 
@@ -123,7 +138,7 @@ These are read from your host's `~/.pi` directory when you run the container.
 Edit the `Dockerfile` to add dependencies:
 
 ```dockerfile
-FROM node:22-bookworm
+FROM node:25-bookworm
 
 # Install additional tools
 RUN apt-get update && apt-get install -y \
@@ -139,6 +154,16 @@ RUN npm install -g @mariozechner/pi-coding-agent
 
 # ... rest of Dockerfile
 ```
+
+### Installed Dependencies
+
+The container comes with these packages pre-installed:
+- `@mariozechner/pi-coding-agent` - The Pi coding agent
+- `lean-ctx-bin` - Lean context management
+- `@aliou/pi-guardrails` - Guardrails plugin
+- `@mjakl/pi-subagent` - Subagent plugin
+- `ctx7` - Context management
+- `lean-ctx init --agent pi` - Initialized for pi agent
 
 ### Using a Custom Image
 
@@ -172,15 +197,16 @@ To debug without removing the container:
 docker run --rm -it --entrypoint /bin/bash pi-agent:latest
 ```
 
-## Files
+## File Structure
 
-- `Dockerfile` - Docker image definition
-- `run-pi.sh` - Wrapper script to run pi in a container
+```
+.
+├── Dockerfile      # Docker image definition (Node.js 25, pi + plugins)
+├── run-pi.sh      # Wrapper script to run pi in a container
+└── README.md      # This file
+```
 
 ## See Also
 
 - [Pi Documentation](https://pi.dev)
 - [Pi GitHub](https://github.com/badlogic/pi-mono)
-- [Pi Settings](docs/settings.md)
-- [Pi Skills](docs/skills.md)
-- [Pi Extensions](docs/extensions.md)
