@@ -74,7 +74,7 @@ while [[ $# -gt 0 ]]; do
             IMAGE="$2"
             shift 2
             ;;
-         --no-mount-pi)
+        --no-mount-pi)
             MOUNT_PI=false
             shift
             ;;
