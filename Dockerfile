@@ -74,7 +74,6 @@ RUN npm config set prefix /home/node/.local
 RUN npm install -g \
     @mariozechner/pi-coding-agent@0.67.6 \
     lean-ctx-bin@3.2.2 \
-    @aliou/pi-guardrails@0.10.0 \
     @mjakl/pi-subagent@1.4.1 \
     @upstash/context7-mcp@2.1.8 \
     ctx7@0.3.13
