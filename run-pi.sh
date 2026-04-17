@@ -282,10 +282,10 @@ fi
 
 # Show docker command if verbose
 if [[ "$VERBOSE" == "true" ]]; then
-    echo -e "${GREEN}Running:${NC} docker run $IMAGE bash -l -c pi ${PI_ARGS[*]}" >&2
+    echo -e "${GREEN}Running:${NC} docker run $IMAGE bash -c pi ${PI_ARGS[*]}" >&2
     echo -e "${GREEN}Docker args:${NC} ${DOCKER_ARGS[*]}" >&2
 fi
 
 # Run pi in container through bash (login shell to source ~/.bashrc for leanctx aliases)
 # First run lean-ctx doctor to verify lean-ctx is healthy, then start dashboard in background and run pi
-exec docker run "${DOCKER_ARGS[@]}" "$IMAGE" bash -l -c "pi ${PI_ARGS[*]}"
+exec docker run "${DOCKER_ARGS[@]}" "$IMAGE" bash -c "pi ${PI_ARGS[*]}"

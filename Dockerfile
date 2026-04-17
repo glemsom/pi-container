@@ -24,6 +24,7 @@ RUN curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | d
 RUN apt-get update && apt-get install -y docker.io && rm -rf /var/lib/apt/lists/*
 
 ENV PATH="/home/node/.local/bin:$PATH"
+ENV BASH_ENV="/home/node/.lean-ctx/env.sh"
 
 RUN mkdir -p /home/node/.pi/agent/extensions \
                 /home/node/.pi/agent/skills \
@@ -74,7 +75,7 @@ RUN npm install -g @upstash/context7-mcp
 # Install Pi extensions
 RUN pi install npm:pi-mcp-adapter
 
-RUN touch /home/node/.bashrc && lean-ctx setup
+RUN touch /home/node/.bashrc && lean-ctx bootstrap
 
 RUN npm install -g ctx7
 
