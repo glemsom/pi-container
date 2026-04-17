@@ -77,6 +77,7 @@ RUN npm config set prefix /home/node/.local
 # Install npm packages with pinned versions for reproducibility
 RUN npm install -g --silent --no-audit \
     @mariozechner/pi-coding-agent@0.67.6 \
+    pi-mcp-adapter@2.4.0 \
     lean-ctx-bin@3.2.3 \
     @mjakl/pi-subagent@1.4.1 \
     @upstash/context7-mcp@2.1.8 \

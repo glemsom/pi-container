@@ -178,7 +178,8 @@ RUN npm install -g @mariozechner/pi-coding-agent
 
 The container comes with these packages pre-installed:
 - `@mariozechner/pi-coding-agent` (v0.67.6) - The Pi coding agent
-- `lean-ctx-bin` (v3.2.2) - Lean context management with MCP server
+- `pi-mcp-adapter` (v2.4.0) - MCP adapter extension for Pi
+- `lean-ctx-bin` (v3.2.3) - Lean context management with MCP server
 - `@mjakl/pi-subagent` (v1.4.1) - Subagent plugin
 - `ctx7` (v0.3.13) - Context management
 - `@upstash/context7-mcp` (v2.1.8) - Context7 MCP server for documentation
