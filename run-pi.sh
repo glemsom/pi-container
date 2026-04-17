@@ -39,13 +39,14 @@ Run Pi agent inside an isolated container with your working directory mounted.
 Arguments:
     prompt              Optional initial prompt to send to pi
 
-Options:
-    -h, --help         Show this help message
-    -u, --update        Rebuild Docker image, then run pi
-    -i, --image IMAGE  Docker image to use (default: pi-agent:latest)
-    --no-mount-pi      Don't mount ~/.pi configuration
-    --verbose          Show docker commands being executed
-    --                 Pass through arguments to pi
+ Options:
+     -h, --help         Show this help message
+     -u, --update        Rebuild Docker image, then run pi
+     -i, --image IMAGE  Docker image to use (default: pi-agent:latest)
+     --no-mount-pi      Don't mount ~/.pi configuration
+     --no-mcp-host-config  Use container's MCP config instead of host's
+     --verbose          Show docker commands being executed
+     --                 Pass through arguments to pi
 
 Examples:
     $(basename "$0")                                    # Interactive mode
@@ -62,6 +63,7 @@ MOUNT_PI=true
 VERBOSE=false
 REBUILD=false
 PI_ARGS=()
+NO_MCP_HOST_CONFIG=false
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -72,8 +74,20 @@ while [[ $# -gt 0 ]]; do
             IMAGE="$2"
             shift 2
             ;;
-        --no-mount-pi)
+    --no-mount-pi)
             MOUNT_PI=false
+            shift
+            ;;
+    --no-mcp-host-config)
+            NO_MCP_HOST_CONFIG=true
+            shift
+            ;;
+    --verbose)
+            VERBOSE=true
+            shift
+            ;;
+        --no-mcp-host-config)
+            NO_MCP_HOST_CONFIG=true
             shift
             ;;
         --verbose)
@@ -140,6 +154,7 @@ for env_var in \
     PI_SKIP_VERSION_CHECK \
     PI_CACHE_RETENTION \
     PI_SHARE_VIEWER_URL \
+    PI_USE_CONTAINER_MCP \
     ANTHROPIC_API_KEY \
     ANTHROPIC_API_KEY_FILE \
     OPENAI_API_KEY \
@@ -178,6 +193,11 @@ if [[ -z "$GH_TOKEN" ]] && command -v gh >/dev/null 2>&1; then
             DOCKER_ARGS+=(--env "GH_TOKEN=$GH_TOKEN")
         fi
     fi
+fi
+
+# If requested, use container's MCP config instead of host's
+if [[ "$NO_MCP_HOST_CONFIG" == "true" ]]; then
+    DOCKER_ARGS+=(--env "PI_USE_CONTAINER_MCP=true")
 fi
 
 # Mount current working directory

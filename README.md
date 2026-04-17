@@ -77,12 +77,24 @@ The wrapper script handles:
 ./run-pi.sh [options] [prompt]
 
 Options:
-  -h, --help         Show help
-  -u, --update      Rebuild Docker image, then run pi
-  -i, --image IMAGE  Docker image (default: pi-agent:latest)
-  --no-mount-pi      Don't mount ~/.pi configuration
-  --verbose          Show docker commands
-  --                 Pass through arguments to pi
+  -h, --help           Show help
+  -u, --update         Rebuild Docker image, then run pi
+  -i, --image IMAGE    Docker image (default: pi-agent:latest)
+  --no-mount-pi        Don't mount ~/.pi configuration (full isolation)
+  --no-mcp-host-config Use container's built-in MCP config instead of host's
+  --verbose            Show docker commands
+  --                   Pass through arguments to pi
+```
+
+### Examples
+
+```
+./run-pi.sh                                    # Interactive mode with host config
+./run-pi.sh "List files in src/"              # Run with prompt
+./run-pi.sh --update                           # Rebuild image, then run
+./run-pi.sh --no-mcp-host-config "Hello"      # Use container MCP servers
+./run-pi.sh --no-mount-pi "Hello"             # Full isolation (no host config)
+PI_API_KEY=sk-ant-... ./run-pi.sh "Hello"      # Set API key
 ```
 
 ### Environment Variables
@@ -98,6 +110,7 @@ Options:
 | `PI_CODING_AGENT_DIR` | Override Pi config directory (default: `~/.pi/agent`) |
 | `PI_SKIP_VERSION_CHECK` | Skip version check |
 | `PI_CACHE_RETENTION` | Cache retention settings |
+| `PI_USE_CONTAINER_MCP` | Force container's MCP config (internal, also via `--no-mcp-host-config` flag) |
 
 Additional API keys supported: Azure OpenAI, AWS, Mistral, Groq, Cerebras, xAI, OpenRouter, HuggingFace, Kimi, MiniMax
 
@@ -164,7 +177,7 @@ The container comes with these packages pre-installed:
 - `@mjakl/pi-subagent` - Subagent plugin
 - `ctx7` - Context management
 - `@mariozechner/pi-mcp-adapter` - MCP adapter for Pi
-- `@context7/mcp` - Context7 MCP server for documentation
+- `@upstash/context7-mcp` - Context7 MCP server for documentation
 - `lean-ctx init --agent pi` - Initialized for pi agent
 
 ## MCP Server Configuration
@@ -186,14 +199,13 @@ Create `~/.pi/agent/mcp.json`:
       "command": "lean-ctx",
       "lifecycle": "lazy"
     },
-    "context7": {
-      "command": "npx",
-      "args": ["-y", "@context7/mcp"],
-      "env": {
-        "CONTEXT7_API_KEY": "${CONTEXT7_API_KEY}"
-      },
-      "lifecycle": "lazy"
-    }
+     "context7": {
+       "command": "context7-mcp",
+       "env": {
+         "CONTEXT7_API_KEY": "${CONTEXT7_API_KEY}"
+       },
+       "lifecycle": "lazy"
+     }
   }
 }
 ```
@@ -203,7 +215,7 @@ Create `~/.pi/agent/mcp.json`:
 | Server | Purpose | Configuration |
 |--------|---------|--------------|
 | `lean-ctx` | Token-efficient context management (42 tools) | `command: "lean-ctx"` |
-| `context7` | Up-to-date library documentation (9000+ libraries) | `npx -y @context7/mcp` (requires `CONTEXT7_API_KEY`) |
+| `context7` | Up-to-date library documentation (9000+ libraries) | `context7-mcp` (requires `CONTEXT7_API_KEY`) |
 
 ### Usage
 
@@ -236,20 +248,30 @@ PI_DOCKER_IMAGE=my-custom-pi ./run-pi.sh
 
 ## MCP Server Configuration
 
-Pi supports MCP (Model Context Protocol) servers via the pi-mcp-adapter extension. Configure servers in `~/.pi/agent/mcp.json` on your host (mounted to the container).
+Pi supports MCP (Model Context Protocol) servers via the pi-mcp-adapter extension. MCP servers can be configured:
 
-### Pre-installed MCP Servers
+### Container-Managed MCP (Default Fallback)
 
-The container includes:
+The container includes a built-in MCP configuration with `lean-ctx` and `context7` servers. This configuration is automatically installed when:
+- No host `~/.pi` directory is mounted (`--no-mount-pi`)
+- **Or** the host's `~/.pi/agent/mcp.json` file does not exist
+- **Or** you pass `--no-mcp-host-config` to force using the container config
 
-| Server | Tools | Description |
-|--------|-------|-------------|
-| `lean-ctx` | 42 tools | Token-efficient context management, compression, and project intelligence |
-| `context7` | 2 tools | Up-to-date documentation for 9000+ libraries |
+When any of these conditions are met, the container copies its default config from `/etc/pi-mcp/default.json` to `/home/node/.pi/agent/mcp.json` at startup.
+
+### Host-Managed MCP
+
+By default, `~/.pi` is mounted from the host. If you have `~/.pi/agent/mcp.json` on your host, that configuration will be used exclusively. This gives you full control from your host machine.
+
+If you mount `~/.pi` but don't have an `agent/mcp.json`, the container will automatically create one with the default servers (unless you use `--no-mcp-host-config` to always force container config, even overwriting an existing host file).
+
+### Project-Specific MCP
+
+Add `.pi/mcp.json` to your project directory (mounted as `/workspace/.pi/mcp.json`). Project config always overrides both host and container configs. Useful for per-project MCP server setups.
 
 ### Configuration Example
 
-Create `~/.pi/agent/mcp.json`:
+Container default `~/.pi/agent/mcp.json`:
 
 ```json
 {
@@ -262,14 +284,13 @@ Create `~/.pi/agent/mcp.json`:
       "command": "lean-ctx",
       "lifecycle": "lazy"
     },
-    "context7": {
-      "command": "npx",
-      "args": ["-y", "@context7/mcp"],
-      "env": {
-        "CONTEXT7_API_KEY": "${CONTEXT7_API_KEY}"
-      },
-      "lifecycle": "lazy"
-    }
+     "context7": {
+       "command": "context7-mcp",
+       "env": {
+         "CONTEXT7_API_KEY": "${CONTEXT7_API_KEY}"
+       },
+       "lifecycle": "lazy"
+     }
   }
 }
 ```
