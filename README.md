@@ -124,6 +124,7 @@ Additional API keys supported: Azure OpenAI, AWS, Mistral, Groq, Cerebras, xAI, 
 | `~/.ssh` | `/home/node/.ssh` | SSH keys (for git operations) |
 | `~/.config/gh` | `/home/node/.config/gh` | GitHub CLI token |
 | `~/.lean-ctx` | `/home/node/.lean-ctx` | Shared context (lean-ctx) |
+| `~/.pi/agent/cache` | `/home/node/.pi/agent/cache` | Kilo Gateway model cache (persisted) |
 | `/var/run/docker.sock` | `/var/run/docker.sock` | Docker socket (for host docker access) |
 
 **Note:** Only selective subdirectories from `~/.pi/agent` are mounted to keep MCP configuration (`mcp.json`) and authentication (`auth.json`) container-managed. The container provides its own MCP config with `lean-ctx` and `context7` pre-configured.

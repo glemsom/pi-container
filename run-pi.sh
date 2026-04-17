@@ -15,6 +15,7 @@
 #   - Current working directory -> /workspace (current dir of pi)
 #   - ~/.pi                      -> /home/node/.pi (pi configuration)
 #   - ~/.agents                  -> /home/node/.agents (shared skills location)
+#   - ~/.pi/agent/cache          -> /home/node/.pi/agent/cache (Kilo Gateway model cache)
 #   - Note: ~/.npmrc is NOT mounted - host config often has paths that break in container
 #
 
@@ -263,6 +264,11 @@ if [[ "$MOUNT_PI" == "true" ]]; then
     # ~/.lean-ctx -> /home/node/.lean-ctx (shared context between host and container)
     if [[ -d "$USER_HOME/.lean-ctx" ]]; then
         DOCKER_ARGS+=(-v "$USER_HOME/.lean-ctx:/home/node/.lean-ctx")
+    fi
+
+    # ~/.pi/agent/cache -> /home/node/.pi/agent/cache (Kilo Gateway model cache)
+    if [[ -d "$pi_agent_dir/cache" ]]; then
+        DOCKER_ARGS+=(-v "$pi_agent_dir/cache:/home/node/.pi/agent/cache")
     fi
 fi
 

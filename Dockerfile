@@ -45,6 +45,10 @@ COPY kilo-gateway.ts /home/node/.pi/agent/extensions/kilo-gateway.ts
 # Use: docker run -v /path/on/host:/home/node/.lean-ctx <image>
 VOLUME /home/node/.lean-ctx
 
+# Declare volume for Kilo Gateway extension cache (models)
+# Use: docker run -v /path/on/host/cache:/home/node/.pi/agent/cache <image>
+VOLUME /home/node/.pi/agent/cache
+
 # Store default MCP configuration at a fixed location (not under ~/.pi to avoid mount conflicts)
 # Must run as root before USER change
 RUN mkdir -p /etc/pi-mcp && \
