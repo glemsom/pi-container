@@ -1,327 +1,93 @@
 # Pi Container
 
-Run the [Pi coding agent](https://pi.dev) inside an isolated Docker container, with your working directory and configuration properly mounted.
+Docker-based environment for running the Pi coding agent in an isolated container.
 
-This repository contains:
-- `Dockerfile` - Docker image definition with Node.js 25, pi, and optional dependencies
-- `run-pi.sh` - Wrapper script to run pi in a container
+## Files
 
-## Why Use a Container?
+- `Dockerfile.base` – Base image with Node.js 25, Pi agent, and Docker CLI
+- `Dockerfile.overlay` – Example user overlay with common dev tools and GitHub CLI
+- `run-pi.sh` – Wrapper script to run the container with useful mounts and env forwarding
 
-- **Isolation**: Pi runs in its own environment without polluting your host system
-- **Consistency**: Same dependencies and Node.js version everywhere
-- **Security**: Restrict what pi can access by controlling the container
-- **Portability**: Works the same on any machine with Docker
+## Build Images
 
-## Quick Start
-
-### 1. Build the Container
+### 1) Build base image
 
 ```bash
-docker build -t pi-agent:latest .
-# Or use the wrapper to build and run:
-./run-pi.sh --update
+docker build -f Dockerfile.base -t pi-agent:base .
 ```
 
-### 2. Run Pi
+### 2) Build overlay image
 
-**Interactive mode** (your current directory is mounted as `/workspace`):
+Edit the `FROM` line in `Dockerfile.overlay` if needed.
+
+Example:
+
+```Dockerfile
+FROM pi-agent:base
+```
+
+Then build:
 
 ```bash
-./run-pi.sh
+docker build -f Dockerfile.overlay -t pi-agent:overlay .
 ```
 
-**With an initial prompt**:
+## Run
 
-```bash
-./run-pi.sh "List all files in this project"
-```
-
-### 3. Set Up Authentication
-
-Pi supports multiple providers. Set your API key in the environment:
-
-```bash
-# Anthropic (Claude)
-export ANTHROPIC_API_KEY=sk-ant-...
-
-# OpenAI
-export OPENAI_API_KEY=sk-...
-
-# Google
-export GOOGLE_API_KEY=...
-
-# Or use the wrapper with PI_API_KEY
-PI_API_KEY=sk-ant-... ./run-pi.sh "Hello"
-```
-
-Or authenticate interactively inside the container:
+Use the wrapper script:
 
 ```bash
 ./run-pi.sh
-# Then type: /login
 ```
 
-## Wrapper Script: `run-pi.sh`
+By default, this runs `pi` inside the container.
 
-The wrapper script handles:
-- Mounting your working directory to `/workspace`
-- Mounting Pi skills, themes, and prompts from `~/.pi/agent/` (if present, read-only)
-- Mounting shared skills (`~/.agents`)
-- Forwarding necessary environment variables
-- Setting correct UID/GID for file ownership
-
-### Usage
-
-```
-./run-pi.sh [options] [prompt]
-
-Options:
-  -h, --help           Show help
-  -u, --update         Rebuild Docker image, then run pi
-  -i, --image IMAGE    Docker image (default: pi-agent:latest)
-  --no-mount-pi        Don't mount ~/.pi configuration (full isolation)
-  --verbose            Show docker commands
-  --                   Pass through arguments to pi
-```
-
-### Examples
-
-```
-./run-pi.sh                                    # Interactive mode with host config
-./run-pi.sh "List files in src/"              # Run with prompt
-./run-pi.sh --update                           # Rebuild image, then run
-./run-pi.sh --no-mount-pi "Hello"             # Full isolation (no host config)
-PI_API_KEY=sk-ant-... ./run-pi.sh "Hello"      # Set API key
-```
-
-### Environment Variables
-
-| Variable | Description |
-|----------|-------------|
-| `PI_DOCKER_IMAGE` | Override default container image |
-| `ANTHROPIC_API_KEY` | Anthropic API key |
-| `OPENAI_API_KEY` | OpenAI API key |
-| `GOOGLE_API_KEY` | Google API key |
-| `CONTEXT7_API_KEY` | Context7 API key (for documentation MCP) |
-| `GH_TOKEN` / `GITHUB_TOKEN` | GitHub token |
-| `PI_CODING_AGENT_DIR` | Override Pi config directory (default: `~/.pi/agent`) |
-| `PI_SKIP_VERSION_CHECK` | Skip version check |
-| `PI_CACHE_RETENTION` | Cache retention settings |
-
-Additional API keys supported: Azure OpenAI, AWS, Mistral, Groq, Cerebras, xAI, OpenRouter, HuggingFace, Kimi, MiniMax
-
-## What's Mounted
-
-| Host Path | Container Path | Purpose |
-|-----------|----------------|---------|
-| `$PWD` | `/workspace` | Your working directory (pi's cwd) |
-| `~/.pi/agent/skills` | `/home/node/.pi/agent/skills` | Custom Pi skills (read-only) |
-| `~/.pi/agent/themes` | `/home/node/.pi/agent/themes` | UI themes (read-only) |
-| `~/.pi/agent/prompts` | `/home/node/.pi/agent/prompts` | Prompt templates (read-only) |
-| `~/.agents` | `/home/node/.agents` | Shared skills location |
-| `~/.gitconfig` | `/home/node/.gitconfig` | Git configuration |
-| `~/.ssh` | `/home/node/.ssh` | SSH keys (for git operations) |
-| `~/.config/gh` | `/home/node/.config/gh` | GitHub CLI token |
-| `~/.lean-ctx` | `/home/node/.lean-ctx` | Shared context (lean-ctx) |
-| `~/.pi/agent/cache` | `/home/node/.pi/agent/cache` | Kilo Gateway model cache (persisted) |
-| `/var/run/docker.sock` | `/var/run/docker.sock` | Docker socket (for host docker access) |
-
-**Note:** Only selective subdirectories from `~/.pi/agent` are mounted to keep MCP configuration (`mcp.json`) and authentication (`auth.json`) container-managed. The container provides its own MCP config with `lean-ctx` and `context7` pre-configured.
-
-## Pi Configuration
-
-Pi stores configuration in `~/.pi/agent/`. Key files:
-
-| Path | Purpose | Source |
-|------|---------|--------|
-| `settings.json` | Global settings | Container default (can override via env) |
-| `auth.json` | Authentication tokens | Container-managed (use env vars for API keys) |
-| `models.json` | Custom model configurations | Container |
-| `sessions/` | Session history | Container |
-| `skills/` | Custom skills | **Host-mounted** (if present) |
-| `themes/` | Custom themes | **Host-mounted** (if present) |
-| `prompts/` | Prompt templates | **Host-mounted** (if present) |
-| `mcp.json` | MCP server configuration | **Container-managed** (lean-ctx, context7) |
-
-Only the highlighted subdirectories are mounted from your host `~/.pi/agent/`. All other configuration (including MCP servers) is managed inside the container to ensure the pre-installed tools are always available.
-
-The container runs as user 1000:1000 with home `/home/node`.
-
-## Customization
-
-### Build a Custom Image
-
-Edit the `Dockerfile` to add dependencies:
-
-```dockerfile
-FROM node:25-bookworm
-
-# Install additional tools
-RUN apt-get update && apt-get install -y \
-    dumb-init \
-    curl \
-    git \
-    openssh-client \
-    # Add your tools here
-    && rm -rf /var/lib/apt/lists/*
-
-# Install pi
-RUN npm install -g @mariozechner/pi-coding-agent
-
-# ... rest of Dockerfile
-```
-
-### Installed Dependencies
-
-The container comes with these packages pre-installed:
-- `@mariozechner/pi-coding-agent` (v0.67.6) - The Pi coding agent
-- `pi-mcp-adapter` (v2.4.0) - MCP adapter extension for Pi
-- `lean-ctx-bin` (v3.2.3) - Lean context management with MCP server
-- `@mjakl/pi-subagent` (v1.4.1) - Subagent plugin
-- `ctx7` (v0.3.13) - Context management
-- `@upstash/context7-mcp` (v2.1.8) - Context7 MCP server for documentation
-- `lean-ctx init --agent pi` - Initialized for pi agent
-
-### Pre-installed Extensions
-
-The container includes these extensions in `/home/node/.pi/agent/extensions/`:
-
-| Extension | Description |
-|-----------|-------------|
-| `kilo-gateway.ts` | Kilo Gateway provider - dynamically loads models from Kilo API |
-
-#### Kilo Gateway
-
-The Kilo Gateway extension registers `kilo` as a new model provider, enabling access to models from [Kilo AI](https://kilo.ai).
-
-**Features:**
-- Registers provider with default "kilo-auto/free" model
-- Caches models locally for 7 days
-- `/kilo-refresh` command to fetch latest models from API
-
-**Usage:**
+To run a custom command:
 
 ```bash
-# Set your Kilo API token
-export KILO_API_TOKEN=your-token-here
-
-# Run pi with the extension (auto-loaded)
-./run-pi.sh
-
-# Inside pi, refresh models from Kilo API
-/kilo-refresh
+./run-pi.sh bash
+./run-pi.sh pi --help
 ```
 
-Then use `/model kilo` to select a Kilo provider model.
-
-**Note:** You need a Kilo API token. Get one at [kilo.ai](https://kilo.ai).
-
-## MCP Server Configuration
-
-Pi supports MCP (Model Context Protocol) servers via the pi-mcp-adapter extension. The container includes `lean-ctx` and `context7` pre-configured.
-
-### How MCP Works in the Container
-
-Since only selective subdirectories from `~/.pi/agent` are mounted (skills, themes, prompts), MCP configuration is **container-managed**:
-
-| Scenario | Behavior |
-|----------|----------|
-| Default (no `~/.pi` mounted) | Container uses built-in MCP config |
-| Selective `~/.pi/agent/*` mount | Container MCP config is always used |
-| Project `.pi/mcp.json` in workspace | Project config overrides container config |
-
-The container's default MCP config is at `/etc/pi-mcp/default.json` and is copied to `/home/node/.pi/agent/mcp.json` at startup if needed.
-
-### Pre-installed MCP Servers
-
-| Server | Tools | Description |
-|--------|-------|-------------|
-| `lean-ctx` | 46 tools | Token-efficient context management, compression, and project intelligence |
-| `context7` | 2 tools | Up-to-date documentation for 9000+ libraries (requires `CONTEXT7_API_KEY`) |
-
-### Configuration
-
-The container's default `~/.pi/agent/mcp.json`:
-
-```json
-{
-  "settings": {
-    "toolPrefix": "none",
-    "idleTimeout": 10
-  },
-  "mcpServers": {
-    "lean-ctx": {
-      "command": "lean-ctx",
-      "lifecycle": "lazy"
-    },
-    "context7": {
-      "command": "context7-mcp",
-      "env": {
-        "CONTEXT7_API_KEY": "${CONTEXT7_API_KEY}"
-      },
-      "lifecycle": "lazy"
-    }
-  }
-}
-```
-
-### Context7 Setup
-
-1. Get an API key from [context7.com/dashboard](https://context7.com/dashboard)
-2. Set it as an environment variable:
+Use a different image tag:
 
 ```bash
-export CONTEXT7_API_KEY=your_key_here
+PI_IMAGE=my-custom-image:tag ./run-pi.sh
 ```
 
-The `run-pi.sh` script automatically forwards this variable. Get your key at [context7.com/dashboard](https://context7.com/dashboard).
+## Mounts and Runtime Behavior
 
-### Usage
+`run-pi.sh` configures these mounts:
 
-In Pi, interact with MCP servers:
+- `$PWD` → `/workspace` (read-write)
+- `/var/run/docker.sock` → `/var/run/docker.sock` (if present)
+- `~/.gitconfig` → `/home/node/.gitconfig` (read-only, if present)
+- `~/.ssh` → `/home/node/.ssh` (read-only, if present)
+- `~/.config/gh` → `/home/node/.config/gh` (read-only, if present)
 
-- `mcp({ search: "read file" })` — Search all tools (MCP + Pi)
-- `mcp({ describe: "ctx_read" })` — Describe a specific tool
-- `mcp({ tool: "ctx_read", args: '{"path": "file.rs", "mode": "full"}' })` — Call a tool
-- `mcp({ connect: "lean-ctx" })` — Connect a server manually
-- `/mcp` — Open interactive MCP panel
+This allows the container to:
 
-MCP servers are lazy by default — they connect only when you first call a tool, and disconnect after 10 minutes of inactivity.
+- Work directly on your current project directory
+- Use host Docker daemon via socket mount
+- Reuse git, SSH, and GitHub CLI configuration
 
-## Development
+## Environment Variables
 
-To rebuild the image:
+The wrapper forwards these variables when set:
 
-```bash
-docker build -t pi-agent:latest .
-```
+- `OPENAI_API_KEY`
+- `ANTHROPIC_API_KEY`
+- `GOOGLE_API_KEY`
+- `GEMINI_API_KEY`
+- `XAI_API_KEY`
+- `DEEPSEEK_API_KEY`
+- `MISTRAL_API_KEY`
+- `OPENROUTER_API_KEY`
+- `GROQ_API_KEY`
+- `PERPLEXITY_API_KEY`
 
-To run with verbose output:
+## Notes
 
-```bash
-./run-pi.sh --verbose "your prompt"
-```
-
-To debug without removing the container:
-
-```bash
-docker run --rm -it --entrypoint /bin/bash pi-agent:latest
-```
-
-## File Structure
-
-```
-.
-├── Dockerfile                   # Docker image definition (Node.js 25, pi + plugins)
-├── run-pi.sh                   # Wrapper script to run pi in a container
-├── kilo-gateway.ts             # Kilo Gateway extension for kilo.ai models
-├── lean-ctx-dashboard.sh       # Manage lean-ctx dashboard container
-├── entrypoint.sh               # Container entrypoint script
-└── README.md                   # This file
-```
-
-## See Also
-
-- [Pi Documentation](https://pi.dev)
-- [Pi GitHub](https://github.com/badlogic/pi-mono)
+- `Dockerfile.overlay` is an example layer you can customize with your own tools.
+- If `/var/run/docker.sock` is missing, Docker commands in the container cannot access the host daemon.
+- The images use the existing `node` user (UID 1000) from `node:25-bookworm-slim`.

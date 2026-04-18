@@ -1,0 +1,26 @@
+FROM node:25-bookworm-slim
+
+USER root
+
+# Minimal runtime deps + init process
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends ca-certificates curl dumb-init tar \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Pi coding agent globally
+RUN npm install -g @mariozechner/pi-coding-agent
+
+# Install Docker CLI (static binary)
+ARG DOCKER_CLI_VERSION=29.4.0
+RUN set -eux; \
+    docker_arch="x86_64"; \
+    curl -fsSL "https://download.docker.com/linux/static/stable/${docker_arch}/docker-${DOCKER_CLI_VERSION}.tgz" -o /tmp/docker.tgz; \
+    tar -xzf /tmp/docker.tgz -C /tmp; \
+    install -m 0755 /tmp/docker/docker /usr/local/bin/docker; \
+    rm -rf /tmp/docker /tmp/docker.tgz
+
+USER node
+WORKDIR /workspace
+
+ENTRYPOINT ["dumb-init", "--"]
+CMD ["/bin/bash"]
