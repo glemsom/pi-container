@@ -1,2 +1,3 @@
 Dockerfile.overlay
 extensions
+run-lean-ctx.sh
