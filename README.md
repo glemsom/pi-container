@@ -18,8 +18,6 @@ docker build -f Dockerfile.base -t pi-agent:base .
 
 ### 2) Build overlay image
 
-Edit the `FROM` line in `Dockerfile.overlay` if needed.
-
 Example:
 
 ```Dockerfile
