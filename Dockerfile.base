@@ -25,8 +25,10 @@ RUN set -eux; \
     rm -rf /tmp/docker /tmp/docker.tgz
 
 USER node
+
 # Set node folder
 RUN npm config set prefix /home/node/.local
+ENV PATH="/home/node/.local/bin:$PATH"
 
 # Install Pi coding agent globally
 RUN npm install -g @mariozechner/pi-coding-agent
