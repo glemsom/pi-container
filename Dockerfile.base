@@ -28,6 +28,8 @@ USER node
 
 # Set node folder
 RUN npm config set prefix /home/node/.local
+
+# Set path
 ENV PATH="/home/node/.local/bin:$PATH"
 
 # Install Pi coding agent globally
