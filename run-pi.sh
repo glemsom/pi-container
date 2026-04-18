@@ -4,6 +4,7 @@ set -euo pipefail
 IMAGE="${PI_IMAGE:-pi-agent:overlay}"
 WORKDIR="${PWD}"
 
+# Arrays to collect docker run arguments
 args=(
   --rm
   -it
@@ -11,6 +12,44 @@ args=(
   --user node
   -v "${WORKDIR}:/workspace"
 )
+
+# Additional docker flags passed via -e, -v, -w on command line
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    -e|--env)
+      args+=( -e "$2" )
+      shift 2
+      ;;
+    -v|--volume)
+      args+=( -v "$2" )
+      shift 2
+      ;;
+    -w|--workdir)
+      args+=( -w "$2" )
+      shift 2
+      ;;
+    --image)
+      IMAGE="$2"
+      shift 2
+      ;;
+    --)
+      shift
+      break
+      ;;
+    -*)
+      # Pass unknown flags through to docker run
+      args+=( "$1" )
+      shift
+      ;;
+    *)
+      # Not a flag, stop parsing
+      break
+      ;;
+  esac
+done
+
+# Remaining arguments are the container command
+container_cmd=("$@")
 
 # Host Docker access
 if [[ -S /var/run/docker.sock ]]; then
@@ -32,7 +71,7 @@ if [[ -d "${HOME}/.config/gh" ]]; then
   args+=( -v "${HOME}/.config/gh:/home/node/.config/gh:ro" )
 fi
 
-# Forward common API key env vars if present
+# Forward common API key env vars if present (only from host env, not command line)
 forward_env_vars=(
   OPENAI_API_KEY
   ANTHROPIC_API_KEY
@@ -53,8 +92,8 @@ for name in "${forward_env_vars[@]}"; do
 done
 
 # Default command starts pi; pass any custom command/args through.
-if [[ "$#" -gt 0 ]]; then
-  exec docker run "${args[@]}" "${IMAGE}" "$@"
+if [[ ${#container_cmd[@]} -gt 0 ]]; then
+  exec docker run "${args[@]}" "${IMAGE}" "${container_cmd[@]}"
 else
   exec docker run "${args[@]}" "${IMAGE}" pi
 fi
