@@ -84,6 +84,23 @@ The wrapper forwards these variables when set:
 - `GROQ_API_KEY`
 - `PERPLEXITY_API_KEY`
 
+### Adding Extra Environment Variables
+
+To pass additional environment variables from the host to the container, use the `-e` flag:
+
+```bash
+./run-pi.sh -e MY_VAR=value -e ANOTHER_VAR=value
+```
+
+Or set them in your shell before running:
+
+```bash
+export MY_VAR=value
+./run-pi.sh
+```
+
+Note: Variables must be passed **after** the script name but **before** any command arguments.
+
 ## Notes
 
 - `Dockerfile.overlay` is an example layer you can customize with your own tools.
