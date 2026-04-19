@@ -28,6 +28,10 @@ while [[ $# -gt 0 ]]; do
       args+=( -w "$2" )
       shift 2
       ;;
+    --no-skills-mount)
+      skip_skills_mount=1
+      shift
+      ;;
     --image)
       IMAGE="$2"
       shift 2
@@ -72,6 +76,11 @@ fi
 
 if [[ -d "${HOME}/.ssh" ]]; then
   args+=( -v "${HOME}/.ssh:/home/node/.ssh:ro" )
+fi
+
+# Optional skills mount (read-only, disabled with --no-skills-mount)
+if [[ -d "${HOME}/.pi/agent/skills" ]] && [[ ${skip_skills_mount:-0} -eq 0 ]]; then
+  args+=( -v "${HOME}/.pi/agent/skills:/home/node/.local/lib/node_modules/pi-context/skills:ro" )
 fi
 
 if [[ -d "${HOME}/.config/gh" ]]; then
