@@ -15,6 +15,10 @@ RUN apt-get update \
       ripgrep \
     && rm -rf /var/lib/apt/lists/*
 
+# Install Bun
+RUN curl -fsSL https://bun.sh/install | bash \
+    && ln -s /root/.bun/bin/bun /usr/local/bin/bun
+
 # GitHub CLI (gh)
 RUN set -eux; \
     mkdir -p /etc/apt/keyrings; \
@@ -28,17 +32,30 @@ RUN set -eux; \
     rm -rf /var/lib/apt/lists/*
 
 USER node
-# Example custom config:
+
+RUN mkdir -p /home/node/.pi/agent/
+
+# Download Pi agents.md
+RUN curl -fsSL -o /home/node/.pi/agent/AGENTS.md \
+    https://raw.githubusercontent.com/mksglu/context-mode/refs/heads/main/configs/pi/AGENTS.md
 
 # Extension: Kilo Gateway
 COPY --chown=node:node extensions/kilo-gateway.ts /home/node/.pi/agent/extensions/kilo-gateway.ts
 
-# Install lean-ctx
-RUN npm install -g lean-ctx-bin
-RUN lean-ctx init --global
-RUN pi install npm:pi-lean-ctx
+# Create mcp.json for context-mode
+RUN cat > /home/node/.pi/agent/mcp.json << 'EOF'
+{
+  "mcpServers": {
+    "context-mode": {
+      "command": "node",
+      "args": ["/home/node/.pi/extensions/context-mode/node_modules/context-mode/start.mjs"]
+    }
+  }
+}
+EOF
 
-# Setup non-interactive bash environment
-ENV BASH_ENV="/home/node/.lean-ctx/env.sh"
+
+# Install context mode extension
+RUN pi install npm:context-mode
 
 WORKDIR /workspace
