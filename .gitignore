@@ -1,4 +1,4 @@
 Dockerfile.overlay
 extensions
-run-lean-ctx.sh
+run-lean-ctx-dashboard.sh
 .lean-ctx
