@@ -2,12 +2,6 @@
 
 Docker-based environment for running the Pi coding agent in an isolated container.
 
-## Files
-
-- `Dockerfile.base` – Base image with Node.js 25, Pi agent, and Docker CLI
-- `Dockerfile.overlay` – Example user overlay with common dev tools and GitHub CLI
-- `run-pi.sh` – Wrapper script to run the container with useful mounts and env forwarding
-
 ## Build Images
 
 ### 1) Build base image
@@ -16,19 +10,24 @@ Docker-based environment for running the Pi coding agent in an isolated containe
 docker build -f Dockerfile.base -t pi-agent:base .
 ```
 
+The base image includes:
+- Node.js 25 (bookworm)
+- `fd` binary v10.4.2 (file discovery for Pi agent)
+- Docker CLI v29.4.0
+- Pi coding agent (`@mariozechner/pi-coding-agent`)
+
 ### 2) Build overlay image
-
-Example:
-
-```Dockerfile
-FROM pi-agent:base
-```
-
-Then build:
 
 ```bash
 docker build -f Dockerfile.overlay -t pi-agent:overlay .
 ```
+
+The overlay image adds:
+- Development tools: git, gpg, openssh-client, ripgrep
+- GitHub CLI (`gh`)
+- Pi Context plugin (`pi install npm:pi-context`)
+- lean-ctx and pi-lean-ctx for context management
+- Kilo Gateway extension
 
 ## Run
 
@@ -47,13 +46,22 @@ To run a custom command:
 ./run-pi.sh pi --help
 ```
 
-Use a different image tag:
+### Options
+
+| Flag | Description |
+|------|-------------|
+| `--image <tag>` | Use a different image tag (default: `pi-agent:overlay`) |
+| `-e <var>` | Pass environment variable into container |
+| `-v <mount>` | Add volume mount (e.g., `-v /host/path:/container/path`) |
+| `-w <dir>` | Set working directory inside container |
+
+Alternatively, set `PI_IMAGE` env var:
 
 ```bash
 PI_IMAGE=my-custom-image:tag ./run-pi.sh
 ```
 
-## Mounts and Runtime Behavior
+### Mounts and Runtime Behavior
 
 `run-pi.sh` configures these mounts:
 
@@ -115,8 +123,14 @@ KILO_API_TOKEN=your-token-here ./run-pi.sh \
 
 - `KILO_API_TOKEN` is forwarded into the container as an environment variable.
 
+### GitHub CLI Authentication
+
+If `gh` is authenticated on the host, the GitHub token is automatically injected into the container as `GITHUB_TOKEN`.
+
 ## Notes
 
 - `Dockerfile.overlay` is an example layer you can customize with your own tools.
 - If `/var/run/docker.sock` is missing, Docker commands in the container cannot access the host daemon.
-- The images use the existing `node` user (UID 1000) from `node:25-bookworm-slim`.
+- The images use the non-root `node` user (UID 1000) from `node:25-bookworm`.
+- lean-ctx is pre-initialized in the overlay image for efficient context management.
+- The Kilo Gateway extension (`extensions/kilo-gateway.ts`) is included in the overlay.
