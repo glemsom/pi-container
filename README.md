@@ -67,6 +67,7 @@ This allows the container to:
 
 - Work directly on your current project directory
 - Use host Docker daemon via socket mount
+- Access Docker as non-root (`node`) by adding the socket GID as a supplemental group
 - Reuse git, SSH, and GitHub CLI configuration
 
 ## Environment Variables

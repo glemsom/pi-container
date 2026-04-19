@@ -54,6 +54,13 @@ container_cmd=("$@")
 # Host Docker access
 if [[ -S /var/run/docker.sock ]]; then
   args+=( -v /var/run/docker.sock:/var/run/docker.sock )
+
+  # Match the socket's group inside the container so non-root user can access Docker.
+  # This avoids needing to run the container as root.
+  docker_sock_gid="$(stat -c '%g' /var/run/docker.sock)"
+  if [[ -n "${docker_sock_gid}" ]]; then
+    args+=( --group-add "${docker_sock_gid}" )
+  fi
 else
   echo "Warning: /var/run/docker.sock not found; Docker CLI in container won't reach host daemon." >&2
 fi
