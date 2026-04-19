@@ -28,4 +28,17 @@ RUN set -eux; \
     rm -rf /var/lib/apt/lists/*
 
 USER node
+# Example custom config:
+
+# Extension: Kilo Gateway
+COPY --chown=node:node extensions/kilo-gateway.ts /home/node/.pi/agent/extensions/kilo-gateway.ts
+
+# Install lean-ctx
+RUN npm install -g lean-ctx-bin
+RUN lean-ctx init --global
+RUN pi install npm:pi-lean-ctx
+
+# Setup non-interactive bash environment
+ENV BASH_ENV="/home/node/.lean-ctx/env.sh"
+
 WORKDIR /workspace
