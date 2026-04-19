@@ -69,6 +69,10 @@ fi
 
 if [[ -d "${HOME}/.config/gh" ]]; then
   args+=( -v "${HOME}/.config/gh:/home/node/.config/gh:ro" )
+  # Inject GitHub token if gh is authenticated
+  if command -v gh &>/dev/null && gh auth token &>/dev/null; then
+    args+=( -e "GITHUB_TOKEN=$(gh auth token)" )
+  fi
 fi
 
 # Forward common API key env vars if present (only from host env, not command line)
