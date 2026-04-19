@@ -92,14 +92,33 @@ To pass additional environment variables from the host to the container, use the
 ./run-pi.sh -e MY_VAR=value -e ANOTHER_VAR=value
 ```
 
-Or set them in your shell before running:
-
-```bash
-export MY_VAR=value
-./run-pi.sh
-```
 
 Note: Variables must be passed **after** the script name but **before** any command arguments.
+
+### Example: Custom API Token and Persistent lean-ctx Cache
+
+The example below passes a custom `KILO_API_TOKEN` and mounts `~/.lean-ctx` from
+the host so the lean-ctx cache (compressed file snapshots, session metrics) persists
+across container runs:
+
+```bash
+./run-pi.sh \
+  -e KILO_API_TOKEN="your-token-here" \
+  -v "${HOME}/.lean-ctx:/home/node/.lean-ctx"
+```
+
+Or with an explicit pi command:
+
+```bash
+KILO_API_TOKEN=your-token-here ./run-pi.sh \
+  -e KILO_API_TOKEN="${KILO_API_TOKEN}" \
+  -v "${HOME}/.lean-ctx:/home/node/.lean-ctx" \
+  pi --model sonnet
+```
+
+- `KILO_API_TOKEN` is forwarded into the container as an environment variable.
+- `~/.lean-ctx` is mounted read-write so compressed file caches and metrics survive
+  between sessions.
 
 ## Notes
 
