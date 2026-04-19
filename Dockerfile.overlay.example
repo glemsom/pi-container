@@ -48,7 +48,13 @@ ENV LEAN_CTX_LAZY_TOOLS=1
 
 ENV BASH_ENV="/home/node/lean-ctxc-env.sh"
 
+# Install Pi Context 7 extension
+RUN pi install npm:@dreki-gg/pi-context7
+
 # Extension: Kilo Gateway
 COPY --chown=node:node extensions/kilo-gateway.ts /home/node/.pi/agent/extensions/kilo-gateway.ts
 
 WORKDIR /workspace
+
+# Example: Run with Context7 API key
+# CONTEXT7_API_KEY=your-key-here ./run-pi.sh -e CONTEXT7_API_KEY="${CONTEXT7_API_KEY}"

@@ -27,6 +27,7 @@ The overlay image adds:
 - GitHub CLI (`gh`)
 - Pi Context plugin (`pi install npm:pi-context`)
 - lean-ctx and pi-lean-ctx for context management
+- Context7 extension (`@dreki-gg/pi-context7`)
 - Kilo Gateway extension
 
 ## Run
@@ -134,3 +135,4 @@ If `gh` is authenticated on the host, the GitHub token is automatically injected
 - The images use the non-root `node` user (UID 1000) from `node:25-bookworm`.
 - lean-ctx is pre-initialized in the overlay image for efficient context management.
 - The Kilo Gateway extension (`extensions/kilo-gateway.ts`) is included in the overlay.
+- The Context7 extension provides documentation lookup capabilities.
