@@ -78,9 +78,21 @@ if [[ -d "${HOME}/.ssh" ]]; then
   args+=( -v "${HOME}/.ssh:/home/node/.ssh:ro" )
 fi
 
+# Persist /home/node/.pi either by bind-mounting the host directory, or by
+# creating a named Docker volume if the host doesn't have ~/.pi yet.
+PI_HOME_DIR="${HOME}/.pi"
+PI_HOME_VOLUME="${PI_HOME_VOLUME:-pi-agent-pi-home}"
+
+if [[ -d "${PI_HOME_DIR}" ]]; then
+  args+=( -v "${PI_HOME_DIR}:/home/node/.pi" )
+else
+  docker volume create "${PI_HOME_VOLUME}" >/dev/null
+  args+=( -v "${PI_HOME_VOLUME}:/home/node/.pi" )
+fi
+
 # Optional skills mount (read-only, disabled with --no-skills-mount)
-if [[ -d "${HOME}/.pi/agent/skills" ]] && [[ ${skip_skills_mount:-0} -eq 0 ]]; then
-  args+=( -v "${HOME}/.pi/agent/skills:/home/node/.local/lib/node_modules/pi-context/skills:ro" )
+if [[ -d "${PI_HOME_DIR}/agent/skills" ]] && [[ ${skip_skills_mount:-0} -eq 0 ]]; then
+  args+=( -v "${PI_HOME_DIR}/agent/skills:/home/node/.local/lib/node_modules/pi-context/skills:ro" )
 fi
 
 if [[ -d "${HOME}/.config/gh" ]]; then

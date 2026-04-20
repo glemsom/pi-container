@@ -70,6 +70,7 @@ PI_IMAGE=my-custom-image:tag ./run-pi.sh
 - `/var/run/docker.sock` → `/var/run/docker.sock` (if present)
 - `~/.gitconfig` → `/home/node/.gitconfig` (read-only, if present)
 - `~/.ssh` → `/home/node/.ssh` (read-only, if present)
+- `~/.pi` → `/home/node/.pi` (bind-mounted if present; otherwise a persistent named Docker volume is used)
 - `~/.config/gh` → `/home/node/.config/gh` (read-only, if present)
 
 This allows the container to:
