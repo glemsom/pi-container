@@ -4,15 +4,6 @@ FROM pi-agent:base
 
 USER root
 
-# Install Docker CLI (static binary)
-ARG DOCKER_CLI_VERSION=29.4.0
-RUN set -eux; \
-    docker_arch="x86_64"; \
-    curl -fsSL "https://download.docker.com/linux/static/stable/${docker_arch}/docker-${DOCKER_CLI_VERSION}.tgz" -o /tmp/docker.tgz; \
-    tar -xzf /tmp/docker.tgz -C /tmp; \
-    install -m 0755 /tmp/docker/docker /usr/local/bin/docker; \
-    rm -rf /tmp/docker /tmp/docker.tgz
-
 # Common development tools
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \

@@ -4,6 +4,10 @@ set -euo pipefail
 IMAGE="${PI_IMAGE:-pi-agent:overlay}"
 WORKDIR="${PWD}"
 
+# Toggles (empty means auto-detect based on existence of host dir)
+use_host_pi="${PI_USE_HOST_PI:-}"
+mount_docker_sock="${PI_MOUNT_DOCKER_SOCK:-true}"
+
 # Arrays to collect docker run arguments
 args=(
   --rm
@@ -28,8 +32,20 @@ while [[ $# -gt 0 ]]; do
       args+=( -w "$2" )
       shift 2
       ;;
-    --no-skills-mount)
-      skip_skills_mount=1
+    --host-pi)
+      use_host_pi="true"
+      shift
+      ;;
+    --no-host-pi)
+      use_host_pi="false"
+      shift
+      ;;
+    --docker-sock)
+      mount_docker_sock="true"
+      shift
+      ;;
+    --no-docker-sock)
+      mount_docker_sock="false"
       shift
       ;;
     --image)
@@ -56,7 +72,7 @@ done
 container_cmd=("$@")
 
 # Host Docker access
-if [[ -S /var/run/docker.sock ]]; then
+if [[ "${mount_docker_sock}" == "true" ]] && [[ -S /var/run/docker.sock ]]; then
   args+=( -v /var/run/docker.sock:/var/run/docker.sock )
 
   # Match the socket's group inside the container so non-root user can access Docker.
@@ -65,7 +81,7 @@ if [[ -S /var/run/docker.sock ]]; then
   if [[ -n "${docker_sock_gid}" ]]; then
     args+=( --group-add "${docker_sock_gid}" )
   fi
-else
+elif [[ "${mount_docker_sock}" == "true" ]]; then
   echo "Warning: /var/run/docker.sock not found; Docker CLI in container won't reach host daemon." >&2
 fi
 
@@ -80,19 +96,28 @@ fi
 
 # Persist /home/node/.pi either by bind-mounting the host directory, or by
 # creating a named Docker volume if the host doesn't have ~/.pi yet.
+# Use --host-pi to force host ~/.pi, --no-host-pi to force Docker volume.
 PI_HOME_DIR="${HOME}/.pi"
 PI_HOME_VOLUME="${PI_HOME_VOLUME:-pi-agent-pi-home}"
 
-if [[ -d "${PI_HOME_DIR}" ]]; then
+if [[ "${use_host_pi}" == "true" ]]; then
+  # Force use host ~/.pi (must exist)
+  if [[ ! -d "${PI_HOME_DIR}" ]]; then
+    echo "Error: --host-pi specified but ${PI_HOME_DIR} does not exist" >&2
+    exit 1
+  fi
   args+=( -v "${PI_HOME_DIR}:/home/node/.pi" )
-else
+elif [[ "${use_host_pi}" == "false" ]]; then
+  # Force use Docker volume
   docker volume create "${PI_HOME_VOLUME}" >/dev/null
   args+=( -v "${PI_HOME_VOLUME}:/home/node/.pi" )
-fi
-
-# Optional skills mount (read-only, disabled with --no-skills-mount)
-if [[ -d "${PI_HOME_DIR}/agent/skills" ]] && [[ ${skip_skills_mount:-0} -eq 0 ]]; then
-  args+=( -v "${PI_HOME_DIR}/agent/skills:/home/node/.local/lib/node_modules/pi-context/skills:ro" )
+elif [[ -d "${PI_HOME_DIR}" ]]; then
+  # Default: use host ~/.pi if it exists
+  args+=( -v "${PI_HOME_DIR}:/home/node/.pi" )
+else
+  # No host ~/.pi, create/use Docker volume
+  docker volume create "${PI_HOME_VOLUME}" >/dev/null
+  args+=( -v "${PI_HOME_VOLUME}:/home/node/.pi" )
 fi
 
 if [[ -d "${HOME}/.config/gh" ]]; then

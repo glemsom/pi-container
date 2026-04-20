@@ -60,14 +60,20 @@ To run a custom command:
 | Flag | Description |
 |------|-------------|
 | `--image <tag>` | Use a different image tag (default: `pi-agent:overlay`) |
+| `--host-pi` | Use host `~/.pi` directory (must exist) |
+| `--no-host-pi` | Use Docker volume for `~/.pi` instead of host directory |
+| `--docker-sock` | Mount Docker socket (default) |
+| `--no-docker-sock` | Don't mount Docker socket |
 | `-e <var>` | Pass environment variable into container |
 | `-v <mount>` | Add volume mount (e.g., `-v /host/path:/container/path`) |
 | `-w <dir>` | Set working directory inside container |
 
-Alternatively, set `PI_IMAGE` env var:
+Alternatively, set these env vars:
 
 ```bash
 PI_IMAGE=my-custom-image:tag ./run-pi.sh
+PI_USE_HOST_PI=true ./run-pi.sh     # Force use host ~/.pi
+PI_MOUNT_DOCKER_SOCK=false ./run-pi.sh  # Disable Docker socket mount
 ```
 
 ### Mounts and Runtime Behavior
@@ -75,10 +81,10 @@ PI_IMAGE=my-custom-image:tag ./run-pi.sh
 `run-pi.sh` configures these mounts:
 
 - `$PWD` → `/workspace` (read-write)
-- `/var/run/docker.sock` → `/var/run/docker.sock` (if present)
+- `/var/run/docker.sock` → `/var/run/docker.sock` (if present, can be disabled with `--no-docker-sock`)
 - `~/.gitconfig` → `/home/node/.gitconfig` (read-only, if present)
 - `~/.ssh` → `/home/node/.ssh` (read-only, if present)
-- `~/.pi` → `/home/node/.pi` (bind-mounted if present; otherwise a persistent named Docker volume is used)
+- `~/.pi` → `/home/node/.pi` (bind-mounted if present; use `--host-pi` or `--no-host-pi` to override)
 - `~/.config/gh` → `/home/node/.config/gh` (read-only, if present)
 
 This allows the container to:
