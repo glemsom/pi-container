@@ -13,16 +13,24 @@ docker build -f Dockerfile.base -t pi-agent:base .
 The base image includes:
 - Node.js 25 (bookworm)
 - `fd` binary v10.4.2 (file discovery for Pi agent)
-- Docker CLI v29.4.0
 - Pi coding agent (`@mariozechner/pi-coding-agent`)
 
 ### 2) Build overlay image
+
+Copy the example overlay file to `Dockerfile.overlay`:
+
+```bash
+cp Dockerfile.overlay.example Dockerfile.overlay
+```
+
+Then build the image:
 
 ```bash
 docker build -f Dockerfile.overlay -t pi-agent:overlay .
 ```
 
 The overlay image adds:
+- Docker CLI v29.4.0
 - Development tools: git, gpg, openssh-client, ripgrep
 - GitHub CLI (`gh`)
 - Pi Context plugin (`pi install npm:pi-context`)
