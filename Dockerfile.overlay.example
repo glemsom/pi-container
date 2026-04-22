@@ -32,9 +32,13 @@ RUN cat > /home/node/entrypoint.sh << 'ENTRYSCRIPT'
 
 set -e
 
-PI_HOME="/home/node/.pi"
-PI_LOCAL="/home/node/.local"
-MARKER_FILE="${PI_HOME}/.installed"
+export PI_HOME="/home/node/.pi"
+export PI_LOCAL="/home/node/.local"
+export MARKER_FILE="${PI_HOME}/.installed"
+export LEAN_CTX_DATA_DIR=/home/node/.pi/lean-ctx
+export BASH_ENV="/home/node/.pi/lean-ctx/env.sh"
+
+[ ! -d "$LEAN_CTX_DATA_DIR" ] && mkdir -p "$LEAN_CTX_DATA_DIR"
 
 # Set npm prefix for the node user
 npm config set prefix "${PI_LOCAL}" --global
@@ -52,7 +56,9 @@ if [ ! -f "${MARKER_FILE}" ]; then
     echo "Installing lean-ctx"
     curl -fsSL https://leanctx.com/install.sh | bash
     pi install npm:pi-lean-ctx
+
     lean-ctx init --global
+    lean-ctx init --agent pi
 
     # Create marker to prevent re-installation
     touch "${MARKER_FILE}"
@@ -63,8 +69,8 @@ else
     echo "Pi Agent already installed. Skipping installation."
 fi
 
-export LEAN_CTX_DATA_DIR=/home/node/.pi/lean-ctx
-mkdir $LEAN_CTX_DATA_DIR || true
+# Ensure lean-ctx functions are loaded
+eval "$(lean-ctx init bash)"
 
 # Execute the CMD as node user
 $*
