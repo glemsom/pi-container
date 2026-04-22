@@ -71,7 +71,9 @@ docker run --rm -it \
     --network host \
     -v pi-agent-pi:/home/node/.pi \
     -v pi-agent-local:/home/node/.local \
+    -v $(pwd):/workspace \
     -v /var/run/docker.sock:/var/run/docker.sock \
+    -v $(HOME)/.gitconfig:/home/node/.gitconfig:ro \
     pi-agent:overlay
 ```
 
