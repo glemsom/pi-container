@@ -63,6 +63,9 @@ else
     echo "Pi Agent already installed. Skipping installation."
 fi
 
+export LEAN_CTX_DATA_DIR=/home/node/.pi/lean-ctx
+mkdir $LEAN_CTX_DATA_DIR || true
+
 # Execute the CMD as node user
 $*
 ENTRYSCRIPT
