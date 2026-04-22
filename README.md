@@ -61,6 +61,20 @@ On first run, the entrypoint will install the Pi Agent. Subsequent runs will ski
 
 The container uses `--network host` for direct host network access.
 
+## Docker Socket Mount Example
+
+To use Docker CLI inside the container (e.g., to build images), mount the host Docker socket:
+
+```bash
+docker run --rm -it \
+    --group-add $(stat -c '%g' /var/run/docker.sock) \
+    --network host \
+    -v pi-agent-pi:/home/node/.pi \
+    -v pi-agent-local:/home/node/.local \
+    -v /var/run/docker.sock:/var/run/docker.sock \
+    pi-agent:overlay
+```
+
 ## Developing the Overlay
 
 1. Edit `Dockerfile.overlay` to add OS packages and in the ENTRYPOINT section add additional Pi agent packages

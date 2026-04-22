@@ -8,6 +8,7 @@ USER root
 RUN apt-get update && apt-get install -y --no-install-recommends \
      git \
      ripgrep \
+     docker.io \
      && rm -rf /var/lib/apt/lists/*
 # ============================================
 
@@ -58,7 +59,7 @@ if [ ! -f "${MARKER_FILE}" ]; then
     pi install npm:pi-lean-ctx
 
     lean-ctx init --global
-    lean-ctx init --agent pi
+    #lean-ctx init --agent pi
 
     # Create marker to prevent re-installation
     touch "${MARKER_FILE}"
