@@ -9,6 +9,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
      git \
      ripgrep \
      docker.io \
+     gh \
      && rm -rf /var/lib/apt/lists/*
 # ============================================
 
@@ -61,6 +62,9 @@ if [ ! -f "${MARKER_FILE}" ]; then
     lean-ctx init --global
     #lean-ctx init --agent pi
 
+    # Install Context7 extension
+    pi install npm:@dreki-gg/pi-context7
+
     # Create marker to prevent re-installation
     touch "${MARKER_FILE}"
     chown node:node "${MARKER_FILE}"
@@ -72,6 +76,9 @@ fi
 
 # Ensure lean-ctx functions are loaded
 eval "$(lean-ctx init bash)"
+
+# LeanCTX config
+#lean-ctx config set excluded_commands make
 
 # Execute the CMD as node user
 $*
