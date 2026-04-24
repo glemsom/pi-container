@@ -40,6 +40,15 @@ export MARKER_FILE="${PI_HOME}/.installed"
 export LEAN_CTX_DATA_DIR=/home/node/.pi/lean-ctx
 export BASH_ENV="/home/node/.pi/lean-ctx/env.sh"
 
+# Enable lazy tool discovery
+export LEAN_CTX_LAZY_TOOLS=1
+
+# Use single-tool mode for minimal token overhead
+export LEAN_CTX_UNIFIED=1
+
+export LEAN_CTX_DISABLED_TOOLS="ctx_benchmark,ctx_metrics,ctx_dedup,ctx_graph,ctx_knowledge,ctx_agent,ctx_share,ctx_gain,ctx_heatmap,ctx_task,ctx_workflow,ctx_graph_diagram,ctx_routes,ctx_compress_memory,ctx_compress"
+# Execute the CMD as node user
+
 [ ! -d "$LEAN_CTX_DATA_DIR" ] && mkdir -p "$LEAN_CTX_DATA_DIR"
 
 # Set npm prefix for the node user
@@ -59,9 +68,6 @@ if [ ! -f "${MARKER_FILE}" ]; then
     curl -fsSL https://leanctx.com/install.sh | bash
     pi install npm:pi-lean-ctx
 
-    lean-ctx init --global
-    #lean-ctx init --agent pi
-
     # Install Context7 extension
     pi install npm:@dreki-gg/pi-context7
 
@@ -74,13 +80,9 @@ else
     echo "Pi Agent already installed. Skipping installation."
 fi
 
-# Ensure lean-ctx functions are loaded
-eval "$(lean-ctx init bash)"
-
 # LeanCTX config
-#lean-ctx config set excluded_commands make
+lean-ctx config set excluded_commands "make, go build"
 
-# Execute the CMD as node user
 $*
 ENTRYSCRIPT
 
