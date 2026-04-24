@@ -20,72 +20,95 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # COPY extensions/kilo-gateway.ts /workspace/extensions/kilo-gateway.ts
 # ============================================
 
-# Create embedded entrypoint script
+# Create directories and embedded entrypoint script
 
-RUN mkdir /home/node/.pi
-RUN mkdir /home/node/.local
-RUN chown -R node:node /home/node/.pi
-RUN chown -R node:node /home/node/.local
-
-USER node
+RUN mkdir -p /home/node/.pi /home/node/.local /home/node/.pi/lean-ctx
+RUN chown -R node:node /home/node/.pi /home/node/.local
 
 RUN cat > /home/node/entrypoint.sh << 'ENTRYSCRIPT'
 #!/bin/bash
+set -e
 
-export PI_HOME="/home/node/.pi"
-export PI_LOCAL="/home/node/.local"
-export MARKER_FILE="${PI_HOME}/.installed"
-export LEAN_CTX_DATA_DIR=/home/node/.pi/lean-ctx
-export BASH_ENV="/home/node/.pi/lean-ctx/env.sh"
+# ============================================
+# Docker In Docker (DinD) - start dockerd
+# Must run as root
+# ============================================
+DOCKERD_PID=""
 
-# Enable lazy tool discovery
-export LEAN_CTX_LAZY_TOOLS=1
+cleanup() {
+    if [ -n "$DOCKERD_PID" ] && kill -0 "$DOCKERD_PID" 2>/dev/null; then
+        echo "Stopping Docker daemon..."
+        kill "$DOCKERD_PID"
+        wait "$DOCKERD_PID" 2>/dev/null
+    fi
+}
+trap cleanup EXIT
 
-# Use single-tool mode for minimal token overhead
-export LEAN_CTX_UNIFIED=1
+echo "Starting Docker daemon (DinD)..."
+dockerd &>/var/log/dockerd.log &
+DOCKERD_PID=$!
 
-export LEAN_CTX_DISABLED_TOOLS="ctx_benchmark,ctx_metrics,ctx_dedup,ctx_graph,ctx_knowledge,ctx_agent,ctx_share,ctx_gain,ctx_heatmap,ctx_task,ctx_workflow,ctx_graph_diagram,ctx_routes,ctx_compress_memory,ctx_compress"
-# Execute the CMD as node user
+echo "Waiting for Docker daemon to be ready..."
+until docker info >/dev/null 2>&1; do
+    sleep 1
+done
+echo "Docker daemon is ready."
 
-[ ! -d "$LEAN_CTX_DATA_DIR" ] && mkdir -p "$LEAN_CTX_DATA_DIR"
+# ============================================
+# Switch to node user for everything else
+# ============================================
+
+run_as_node() {
+    su - node -c "$*"
+}
+
+run_as_node_bash() {
+    su - node -c "bash -c '$*'"
+}
+
+# Ensure node owns its home dirs (defensive - should already be owned)
+run_as_node_bash "mkdir -p /home/node/.pi /home/node/.local /home/node/.pi/lean-ctx"
 
 # Set npm prefix for the node user
-npm config set prefix "${PI_LOCAL}" --global
+run_as_node npm config set prefix "/home/node/.local" --global
 
 # First-run detection: install only if marker file doesn't exist
+MARKER_FILE="/home/node/.pi/.installed"
 if [ ! -f "${MARKER_FILE}" ]; then
     echo "First run detected"
 
     echo "Installing Pi Agent..."
-    npm install -g @mariozechner/pi-coding-agent
+    run_as_node npm install -g @mariozechner/pi-coding-agent
 
     echo "Installing pi-context"
-    pi install npm:pi-context
+    run_as_node pi install npm:pi-context
 
     echo "Installing lean-ctx"
-    curl -fsSL https://leanctx.com/install.sh | bash
-    pi install npm:pi-lean-ctx
+    run_as_node_bash "curl -fsSL https://leanctx.com/install.sh | bash"
+    run_as_node pi install npm:pi-lean-ctx
 
     # Install Context7 extension
-    pi install npm:@dreki-gg/pi-context7
+    run_as_node pi install npm:@dreki-gg/pi-context7
 
     # Create marker to prevent re-installation
-    touch "${MARKER_FILE}"
-    chown node:node "${MARKER_FILE}"
+    run_as_node touch "${MARKER_FILE}"
 
-    echo "Pi Agent installed successfully."
+    echo "Pi Agent setup successfully."
 else
-    echo "Pi Agent already installed. Skipping installation."
+    echo "Pi Agent already setup."
 fi
 
 # LeanCTX config
-lean-ctx config set excluded_commands "make, go build"
+run_as_node lean-ctx config set excluded_commands "make, go build"
 
-$*
+# ============================================
+# Execute the CMD as node user
+# ============================================
+exec su - node -c "$*"
 ENTRYSCRIPT
 
 RUN chmod +x /home/node/entrypoint.sh
 
-# Keep running as root - entrypoint will handle user switching
+# Run as root - entrypoint starts dockerd (requires root), then switches to node
 ENTRYPOINT ["/home/node/entrypoint.sh"]
 CMD ["/home/node/.local/bin/pi"]

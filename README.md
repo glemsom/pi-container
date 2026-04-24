@@ -6,7 +6,7 @@ Run the Pi Agent inside a Docker container with persistent volumes.
 
 ```bash
 # Oneline rebuild all and run
-cp Dockerfile.overlay.example Dockerfile.overlay; docker volume rm pi-agent-pi pi-agent-local 2>/dev/null; docker volume create pi-agent-pi && docker volume create pi-agent-local; docker buildx build -t pi-agent:overlay -f Dockerfile.overlay . --load && docker run --rm -it --network host -v pi-agent-pi:/home/node/.pi -v pi-agent-local:/home/node/.local pi-agent:overlay
+cp Dockerfile.overlay.example Dockerfile.overlay; docker volume rm pi-agent-pi pi-agent-local 2>/dev/null; docker volume create pi-agent-pi && docker volume create pi-agent-local; docker buildx build -t pi-agent:overlay -f Dockerfile.overlay . --load && docker run --rm -it --privileged --network host -v pi-agent-pi:/home/node/.pi -v pi-agent-local:/home/node/.local pi-agent:overlay
 
 ```
 
@@ -44,6 +44,7 @@ docker buildx build -t pi-agent:overlay -f Dockerfile.overlay . --load
 
 ```bash
 docker run --rm -it \
+    --privileged \
     --network host \
     -v pi-agent-pi:/home/node/.pi \
     -v pi-agent-local:/home/node/.local \
@@ -57,25 +58,32 @@ On first run, the entrypoint will install the Pi Agent. Subsequent runs will ski
 - `pi-agent-pi` - Persistent storage for Pi Agent config (`/home/node/.pi`)
 - `pi-agent-local` - Persistent storage for npm global packages (`/home/node/.local`)
 
-## Network
+## Docker In Docker (DinD)
 
-The container uses `--network host` for direct host network access.
+The overlay image includes DinD support by default. The entrypoint starts `dockerd` inside the container before launching the Pi Agent, so you can build images and run containers from within the Pi Agent.
 
-## Docker Socket Mount Example
+The container starts the Docker daemon as root (required) and then drops privileges to the non-root `node` user for the Pi Agent. The `node` user is a member of the `docker` group, so it can access the Docker socket and run Docker commands without sudo.
 
-To use Docker CLI inside the container (e.g., to build images), mount the host Docker socket:
+> **Note:** DinD requires `--privileged` to access the kernel features needed by `dockerd` (cgroups, device access, namespaces).
 
 ```bash
 docker run --rm -it \
-    --group-add $(stat -c '%g' /var/run/docker.sock) \
+    --privileged \
     --network host \
     -v pi-agent-pi:/home/node/.pi \
     -v pi-agent-local:/home/node/.local \
     -v $(pwd):/workspace \
-    -v /var/run/docker.sock:/var/run/docker.sock \
     -v $(HOME)/.gitconfig:/home/node/.gitconfig:ro \
     pi-agent:overlay
 ```
+
+### Mounting Host Volumes for Docker Builds
+
+When building Docker images inside the container, any `-v` mounts in your `Dockerfile` or `docker build` commands are relative to the DinD daemon, not the host. If you need to build images that reference files outside `/workspace`, add additional bind mounts at the `docker run` level so the inner Docker daemon can access them.
+
+## Network
+
+The container uses `--network host` for direct host network access.
 
 ## Developing the Overlay
 
