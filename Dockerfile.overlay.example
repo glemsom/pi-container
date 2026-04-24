@@ -99,12 +99,20 @@ else
 fi
 
 # LeanCTX config
-run_as_node lean-ctx config set excluded_commands "make, go build"
+su node -c "lean-ctx config set excluded_commands 'make,go build'"
 
 # ============================================
 # Execute the CMD as node user
+# Using 'su node' (no '-') to preserve environment variables
+# passed via docker -e flags. The '-' creates a login shell
+# which resets the environment, dropping dynamic variables.
 # ============================================
-exec su - node -c "$*"
+
+if [ $# -eq 0 ]; then
+    exec su node -c "/home/node/.local/bin/pi"
+else
+    exec su node -c "$*"
+fi
 ENTRYSCRIPT
 
 RUN chmod +x /home/node/entrypoint.sh
