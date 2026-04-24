@@ -11,6 +11,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
      docker.io \
      gh \
      && rm -rf /var/lib/apt/lists/*
+
+# Add node user to docker group so it can run docker commands
+RUN usermod -aG docker node
 # ============================================
 
 # ============================================
