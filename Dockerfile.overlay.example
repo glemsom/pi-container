@@ -32,8 +32,6 @@ USER node
 RUN cat > /home/node/entrypoint.sh << 'ENTRYSCRIPT'
 #!/bin/bash
 
-set -e
-
 export PI_HOME="/home/node/.pi"
 export PI_LOCAL="/home/node/.local"
 export MARKER_FILE="${PI_HOME}/.installed"
