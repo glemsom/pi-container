@@ -87,7 +87,7 @@ gosu node sh -c "lean-ctx config set excluded_commands 'make,go build'"
 if [ $# -eq 0 ]; then
     exec gosu node /home/node/.local/bin/pi
 else
-    exec gosu node "$*"
+    exec gosu node $*
 fi
 
 ENTRYSCRIPT
