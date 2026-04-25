@@ -73,6 +73,9 @@ if [ ! -f "${MARKER_FILE}" ]; then
     # Install Context7 extension
     gosu node pi install npm:@dreki-gg/pi-context7
 
+    # Setup LeanCTX global init
+    gosu node lean-ctx init --global
+
     # Create marker to prevent re-installation
     gosu node touch "${MARKER_FILE}"
 
@@ -93,6 +96,7 @@ fi
 ENTRYSCRIPT
 
 RUN chmod +x /home/node/entrypoint.sh
+ENV BASH_ENV="/home/node/.pi/lean-ctx/env.sh"
 
 # Run as root - entrypoint starts dockerd (requires root), then switches to node
 ENTRYPOINT ["/home/node/entrypoint.sh"]
