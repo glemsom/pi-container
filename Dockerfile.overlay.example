@@ -1,29 +1,21 @@
+# This is an example overlay. Adding Docker support and installing some Pi extensions
 FROM pi-agent:base
 
 USER root
 
 # ============================================
 # USER: Add your OS packages here
-# Examples:
 RUN apt-get update && apt-get install -y --no-install-recommends \
      git \
      ripgrep \
      docker.io \
      gh \
+     gosu \
      && rm -rf /var/lib/apt/lists/*
 
 # Add node user to docker group so it can run docker commands
 RUN usermod -aG docker node
 # ============================================
-
-# ============================================
-# USER: Add your extensions here
-# Copy extension files to /workspace/extensions/ (they will be installed at runtime)
-# Example:
-# COPY extensions/kilo-gateway.ts /workspace/extensions/kilo-gateway.ts
-# ============================================
-
-# Create directories and embedded entrypoint script
 
 RUN mkdir -p /home/node/.pi /home/node/.local /home/node/.pi/lean-ctx
 RUN chown -R node:node /home/node/.pi /home/node/.local
@@ -57,23 +49,11 @@ until docker info >/dev/null 2>&1; do
 done
 echo "Docker daemon is ready."
 
-# ============================================
-# Switch to node user for everything else
-# ============================================
-
-run_as_node() {
-    su - node -c "$*"
-}
-
-run_as_node_bash() {
-    su - node -c "bash -c '$*'"
-}
-
 # Ensure node owns its home dirs (defensive - should already be owned)
-run_as_node_bash "mkdir -p /home/node/.pi /home/node/.local /home/node/.pi/lean-ctx"
+gosu node mkdir -p /home/node/.pi /home/node/.local /home/node/.pi/lean-ctx
 
 # Set npm prefix for the node user
-run_as_node npm config set prefix "/home/node/.local" --global
+gosu node npm config set prefix "/home/node/.local" --global
 
 # First-run detection: install only if marker file doesn't exist
 MARKER_FILE="/home/node/.pi/.installed"
@@ -81,20 +61,20 @@ if [ ! -f "${MARKER_FILE}" ]; then
     echo "First run detected"
 
     echo "Installing Pi Agent..."
-    run_as_node npm install -g @mariozechner/pi-coding-agent
+    gosu node npm install -g @mariozechner/pi-coding-agent
 
-    echo "Installing pi-context"
-    run_as_node pi install npm:pi-context
+    #echo "Installing pi-context"
+    gosu node pi install npm:pi-context
 
-    echo "Installing lean-ctx"
-    run_as_node_bash "curl -fsSL https://leanctx.com/install.sh | bash"
-    run_as_node pi install npm:pi-lean-ctx
+    #echo "Installing lean-ctx"
+    gosu node sh -c "curl -fsSL https://leanctx.com/install.sh | bash"
+    gosu node pi install npm:pi-lean-ctx
 
     # Install Context7 extension
-    run_as_node pi install npm:@dreki-gg/pi-context7
+    gosu node pi install npm:@dreki-gg/pi-context7
 
     # Create marker to prevent re-installation
-    run_as_node touch "${MARKER_FILE}"
+    gosu node touch "${MARKER_FILE}"
 
     echo "Pi Agent setup successfully."
 else
@@ -102,20 +82,14 @@ else
 fi
 
 # LeanCTX config
-su node -c "lean-ctx config set excluded_commands 'make,go build'"
-
-# ============================================
-# Execute the CMD as node user
-# Using 'su node' (no '-') to preserve environment variables
-# passed via docker -e flags. The '-' creates a login shell
-# which resets the environment, dropping dynamic variables.
-# ============================================
+gosu node sh -c "lean-ctx config set excluded_commands 'make,go build'"
 
 if [ $# -eq 0 ]; then
-    exec su node -c "/home/node/.local/bin/pi"
+    exec gosu node /home/node/.local/bin/pi
 else
-    exec su node -c "$*"
+    exec gosu node "$*"
 fi
+
 ENTRYSCRIPT
 
 RUN chmod +x /home/node/entrypoint.sh
