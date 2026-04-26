@@ -76,9 +76,6 @@ if [ ! -f "${MARKER_FILE}" ]; then
     # Setup LeanCTX global init
     gosu node lean-ctx init --global
 
-    # Setup LeanCTX for pi (Installed backup mcp configuration)
-    gosu node lean-ctx init --agent pi
-
     # Create marker to prevent re-installation
     gosu node touch "${MARKER_FILE}"
 
