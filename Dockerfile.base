@@ -4,7 +4,7 @@ USER root
 
 # Minimal runtime deps + init process
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends bash ca-certificates curl dumb-init tar wget \
+    && apt-get install -y --no-install-recommends bash ca-certificates curl dumb-init tar wget yq jq \
     && rm -rf /var/lib/apt/lists/*
 
 USER node
