@@ -34,11 +34,14 @@ docker buildx build -t pi-agent:overlay -f Dockerfile.overlay . --load
 ```
 
 ### 4. Run the container (Example)
+NOTE: Use `-v` for additional mounts, and `-e` to add environment variables as needed.
+
 
 ```bash
 docker run --rm -it \
     --privileged \
     --network host \
+    -v $(pwd):/workspace \
     -v pi-agent-pi:/home/node/.pi \
     -v pi-agent-local:/home/node/.local \
     -e CONTEXT7_API_KEY="$CONTEXT7_API_KEY" \
@@ -60,20 +63,3 @@ The overlay image includes DinD support by default. The entrypoint starts `docke
 The container starts the Docker daemon as root (required) and then drops privileges to the non-root `node` user for the Pi Agent. The `node` user is a member of the `docker` group, so it can access the Docker socket and run Docker commands without sudo.
 
 > **Note:** DinD requires `--privileged` to access the kernel features needed by `dockerd` (cgroups, device access, namespaces).
-
-```bash
-docker run --rm -it \
-    --privileged \
-    --network host \
-    -v pi-agent-pi:/home/node/.pi \
-    -v pi-agent-local:/home/node/.local \
-    -v $(pwd):/workspace \
-    -v $(HOME)/.gitconfig:/home/node/.gitconfig:ro \
-    -e CONTEXT7_API_KEY="$CONTEXT7_API_KEY" \
-    pi-agent:overlay
-```
-
-
-## Network
-
-The container uses `--network host` for direct host network access.S
