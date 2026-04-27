@@ -20,13 +20,13 @@ These volumes persist Pi Agent config and npm global packages across container r
 
 ### 3. Build overlay image
 
-Copy `Dockerfile.overlay.example` to `Dockerfile.overlay` and customize as needed.
+Copy `Dockerfile.overlay.example.dind` to `Dockerfile.overlay` and customize as needed.
 
 NOTE: This example is using a DinD approach, but you can customize the overlay to fit your needs (e.g. add specific tools, set environment variables, etc.). 
-      To reinstall the Pi Agent and extenstions, you can remove the `~/.pi/.installed` marker file from the pi-agent-pi volume.
+      To reinstall the Pi Agent and extensions, you can remove the `~/.pi/.installed` marker file from the pi-agent-pi volume.
 
 ```bash
-cp Dockerfile.overlay.example Dockerfile.overlay
+cp Dockerfile.overlay.example.dind Dockerfile.overlay
 # Edit Dockerfile.overlay to add your packages and other needs
 ```
 
@@ -58,6 +58,19 @@ On first run, the entrypoint will install the Pi Agent. Subsequent runs will ski
 
 - `pi-agent-pi` - Persistent storage for Pi Agent config (`/home/node/.pi`)
 - `pi-agent-local` - Persistent storage for npm global packages (`/home/node/.local`)
+
+## Entrypoint Script (`entrypoint.sh`) (In Dockerfile.overlay.example.dind)
+
+The overlay uses an `entrypoint.sh` script to handle privilege separation and proper initialization:
+
+- **Docker-in-Docker (DinD):** The script starts the Docker daemon (`dockerd`) as `root` to provide DinD capabilities inside the container.
+- **Privilege drop:** After starting `dockerd`, the script switches to the non-root `node` user to install and run the Pi Agent and its extensions.
+- This ensures:
+  - DinD features are available (daemon runs as `root`).
+  - The Pi Agent and extensions run as the `node` user, following security best practices.
+  - The `node` user, as a member of the `docker` group, can manage Docker without `sudo`.
+
+You can find and customize `entrypoint.sh` in the project. This logic is defined in `Dockerfile.overlay.example.dind`, but you may adjust it for your requirements.
 
 ## Docker In Docker (DinD)
 
