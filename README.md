@@ -74,13 +74,10 @@ Notes: On first run the DinD overlay's entrypoint will install the Pi Agent as t
 
 Description: This overlay is a minimal example that installs the Pi Agent at build time and runs entirely as the non-root `node` user. It does not start `dockerd` and does not require privileged mode. Use this when you only need the Pi Agent and don't need Docker-in-Docker capabilities or extra extensions.
 
-Run (no privileged mode required):
 
 ```bash
 docker run --rm -it \
     -v $(pwd):/workspace \
-    -v pi-agent-pi:/home/node/.pi \
-    -v pi-agent-local:/home/node/.local \
     -e CONTEXT7_API_KEY="$CONTEXT7_API_KEY" \
     pi-agent:overlay
 ```

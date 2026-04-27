@@ -6,8 +6,7 @@ USER node
 # Create home dirs, set npm prefix (defensive) and install Pi agent at build time.
 RUN mkdir -p /home/node/.pi /home/node/.local \
     && npm config set prefix "/home/node/.local" --global \
-    && npm install -g @mariozechner/pi-coding-agent \
-    && touch /home/node/.pi/.installed
+    && npm install -g @mariozechner/pi-coding-agent 
 
 # No entrypoint required; run as node user.
 CMD ["/home/node/.local/bin/pi"]
