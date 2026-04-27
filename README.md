@@ -20,7 +20,10 @@ These volumes persist Pi Agent config and npm global packages across container r
 
 ### 3. Build overlay image
 
-Copy `Dockerfile.overlay.example` to `Dockerfile.overlay` and customize as needed:
+Copy `Dockerfile.overlay.example` to `Dockerfile.overlay` and customize as needed.
+
+NOTE: This example is using a DinD approach, but you can customize the overlay to fit your needs (e.g. add specific tools, set environment variables, etc.). 
+      To reinstall the Pi Agent and extenstions, you can remove the `~/.pi/.installed` marker file from the pi-agent-pi volume.
 
 ```bash
 cp Dockerfile.overlay.example Dockerfile.overlay

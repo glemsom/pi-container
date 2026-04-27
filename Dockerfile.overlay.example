@@ -48,6 +48,7 @@ until docker info >/dev/null 2>&1; do
     sleep 1
 done
 echo "Docker daemon is ready."
+# ============================================
 
 # Ensure node owns its home dirs (defensive - should already be owned)
 gosu node mkdir -p /home/node/.pi /home/node/.local /home/node/.pi/lean-ctx
