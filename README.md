@@ -65,6 +65,7 @@ docker run --rm -it \
     -v pi-agent-pi:/home/node/.pi \
     -v pi-agent-local:/home/node/.local \
     -e CONTEXT7_API_KEY="$CONTEXT7_API_KEY" \
+    -e LEAN_CTX_DATA_DIR="/home/node/.pi/lean-ctx" \
     pi-agent:overlay
 ```
 
