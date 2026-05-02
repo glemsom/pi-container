@@ -11,6 +11,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
      docker.io \
      gh \
      gosu \
+     kubectl \
+     && apt-get clean \
      && rm -rf /var/lib/apt/lists/*
 
 # Add node user to docker group so it can run docker commands
@@ -75,7 +77,7 @@ if [ ! -f "${MARKER_FILE}" ]; then
     gosu node pi install npm:@dreki-gg/pi-context7
 
     # Setup LeanCTX global init
-    gosu node lean-ctx init --global
+    #gosu node lean-ctx init --global # Not needed - pi-lean-ctx extension already does this
 
     # Create marker to prevent re-installation
     gosu node touch "${MARKER_FILE}"
