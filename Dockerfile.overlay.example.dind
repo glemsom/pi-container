@@ -11,7 +11,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
      docker.io \
      gh \
      gosu \
-     kubectl \
      && apt-get clean \
      && rm -rf /var/lib/apt/lists/*
 
@@ -88,7 +87,13 @@ else
 fi
 
 # LeanCTX config
-gosu node sh -c "lean-ctx config set excluded_commands 'make,go build'"
+#gosu node sh -c "lean-ctx config set excluded_commands 'make,go build'"
+
+
+# Fetch kubectl
+curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+install -o node -g node -m 0755 kubectl /home/node/.local/bin/kubectl
+rm kubectl
 
 if [ $# -eq 0 ]; then
     exec gosu node /home/node/.local/bin/pi
@@ -99,7 +104,7 @@ fi
 ENTRYSCRIPT
 
 RUN chmod +x /home/node/entrypoint.sh
-ENV BASH_ENV="/home/node/.pi/lean-ctx/env.sh"
+#ENV BASH_ENV="/home/node/.pi/lean-ctx/env.sh"
 
 # Run as root - entrypoint starts dockerd (requires root), then switches to node
 ENTRYPOINT ["/home/node/entrypoint.sh"]
