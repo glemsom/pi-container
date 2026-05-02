@@ -78,7 +78,11 @@ if [ ! -f "${MARKER_FILE}" ]; then
     gosu node pi install npm:pi-lean-ctx
 
     # Install Context7 extension
-    gosu node pi install npm:@dreki-gg/pi-context7
+    #gosu node pi install npm:@dreki-gg/pi-context7
+    gosu node pi install npm:@aaronmaturen/pi-context7
+
+    # Install Pi Subagent extension
+    gosu node pi install npm:pi-subagents
 
     # Setup LeanCTX global init
     #gosu node lean-ctx init --global # Not needed - pi-lean-ctx extension already does this
