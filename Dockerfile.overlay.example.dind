@@ -84,8 +84,8 @@ if [ ! -f "${MARKER_FILE}" ]; then
     # Install Pi Subagent extension
     gosu node pi install npm:pi-subagents
 
-    # Setup LeanCTX global init
-    #gosu node lean-ctx init --global # Not needed - pi-lean-ctx extension already does this
+    # Install Pi Interactive Shell
+    pi install npm:pi-interactive-shell
 
     # Create marker to prevent re-installation
     gosu node touch "${MARKER_FILE}"
