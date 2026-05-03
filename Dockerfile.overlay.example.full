@@ -1,19 +1,29 @@
-# Simple DinD overlay: Pi Agent + Docker-in-Docker, no extra extensions.
+# This is an example overlay. Adding Docker support and installing some Pi extensions
 FROM pi-agent:base
 
 USER root
 
-# Install Docker and utilities for DinD
+# ============================================
+# USER: Add your OS packages here
 RUN apt-get update && apt-get install -y --no-install-recommends \
+     git \
+     ripgrep \
      docker.io \
+     gh \
      gosu \
      && apt-get clean \
      && rm -rf /var/lib/apt/lists/*
 
+RUN curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl" && \
+    cp kubectl /usr/local/bin/kubectl && \
+    chmod +x /usr/local/bin/kubectl && \
+    rm kubectl
+
 # Add node user to docker group so it can run docker commands
 RUN usermod -aG docker node
+# ============================================
 
-RUN mkdir -p /home/node/.pi /home/node/.local
+RUN mkdir -p /home/node/.pi /home/node/.local /home/node/.pi/lean-ctx
 RUN chown -R node:node /home/node/.pi /home/node/.local
 
 RUN cat > /home/node/entrypoint.sh << 'ENTRYSCRIPT'
@@ -46,8 +56,8 @@ done
 echo "Docker daemon is ready."
 # ============================================
 
-# Ensure node owns its home dirs
-gosu node mkdir -p /home/node/.pi /home/node/.local
+# Ensure node owns its home dirs (defensive - should already be owned)
+gosu node mkdir -p /home/node/.pi /home/node/.local /home/node/.pi/lean-ctx
 
 # Set npm prefix for the node user
 gosu node npm config set prefix "/home/node/.local" --global
@@ -60,6 +70,23 @@ if [ ! -f "${MARKER_FILE}" ]; then
     echo "Installing Pi Agent..."
     gosu node npm install -g @mariozechner/pi-coding-agent
 
+    #echo "Installing pi-context"
+    gosu node pi install npm:pi-context
+
+    #echo "Installing lean-ctx"
+    gosu node sh -c "curl -fsSL https://leanctx.com/install.sh | bash -s -- --download"
+    gosu node pi install npm:pi-lean-ctx
+
+    # Install Context7 extension
+    #gosu node pi install npm:@dreki-gg/pi-context7
+    gosu node pi install npm:@aaronmaturen/pi-context7
+
+    # Install Pi Subagent extension
+    gosu node pi install npm:pi-subagents
+
+    # Install Pi Interactive Shell
+    pi install npm:pi-interactive-shell
+
     # Create marker to prevent re-installation
     gosu node touch "${MARKER_FILE}"
 
@@ -67,6 +94,9 @@ if [ ! -f "${MARKER_FILE}" ]; then
 else
     echo "Pi Agent already setup."
 fi
+
+# LeanCTX config
+#gosu node sh -c "lean-ctx config set excluded_commands 'make,go build'"
 
 if [ $# -eq 0 ]; then
     exec gosu node /home/node/.local/bin/pi
@@ -77,6 +107,7 @@ fi
 ENTRYSCRIPT
 
 RUN chmod +x /home/node/entrypoint.sh
+#ENV BASH_ENV="/home/node/.pi/lean-ctx/env.sh"
 
 # Run as root - entrypoint starts dockerd (requires root), then switches to node
 ENTRYPOINT ["/home/node/entrypoint.sh"]
