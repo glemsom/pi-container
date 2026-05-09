@@ -70,8 +70,6 @@ if [ ! -f "${MARKER_FILE}" ]; then
     echo "Installing Pi Agent..."
     gosu node npm install -g @mariozechner/pi-coding-agent
 
-    #echo "Installing pi-context"
-    gosu node pi install npm:pi-context
 
     #echo "Installing lean-ctx"
     gosu node sh -c "curl -fsSL https://leanctx.com/install.sh | bash -s -- --download"
@@ -79,9 +77,15 @@ if [ ! -f "${MARKER_FILE}" ]; then
 
     # Install Pi Subagent extension
     gosu node pi install npm:pi-subagents
-
+ 
     # Install Pi Interactive Shell
-    pi install npm:pi-interactive-shell
+    gosu node pi install npm:pi-interactive-shell
+
+    # Install Pi Skill Toggle
+    gosu node pi install npm:pi-skill-toggle
+
+    # Install Context7 plugin
+    gosu node pi install npm:@dreki-gg/pi-context7
 
     # Create marker to prevent re-installation
     gosu node touch "${MARKER_FILE}"
