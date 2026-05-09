@@ -79,13 +79,16 @@ if [ ! -f "${MARKER_FILE}" ]; then
     gosu node pi install npm:pi-subagents
  
     # Install Pi Interactive Shell
-    gosu node pi install npm:pi-interactive-shell
+    #gosu node pi install npm:pi-interactive-shell
 
     # Install Pi Skill Toggle
     gosu node pi install npm:pi-skill-toggle
 
     # Install Context7 plugin
     gosu node pi install npm:@dreki-gg/pi-context7
+
+    # Install Kilocode plugin
+    gosu node pi install npm:pi-kilocode
 
     # Create marker to prevent re-installation
     gosu node touch "${MARKER_FILE}"
