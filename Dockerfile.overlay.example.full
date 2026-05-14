@@ -75,7 +75,7 @@ if [ ! -f "${MARKER_FILE}" ]; then
     gosu node pi install npm:pi-lean-ctx
 
     # Install Pi Subagent extension
-    gosu node pi install npm:pi-subagents
+    #gosu node pi install npm:pi-subagents
  
     # Install Pi Interactive Shell
     #gosu node pi install npm:pi-interactive-shell
@@ -87,7 +87,7 @@ if [ ! -f "${MARKER_FILE}" ]; then
     gosu node pi install npm:@dreki-gg/pi-context7
 
     # Install Kilocode plugin
-    gosu node pi install npm:pi-kilocode
+    #gosu node pi install npm:pi-kilocode
 
     # Create marker to prevent re-installation
     gosu node touch "${MARKER_FILE}"
