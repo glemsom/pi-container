@@ -11,6 +11,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
      docker.io \
      gh \
      gosu \
+     bats \
      && apt-get clean \
      && rm -rf /var/lib/apt/lists/*
 
@@ -69,6 +70,8 @@ if [ ! -f "${MARKER_FILE}" ]; then
 
     echo "Installing Pi Agent..."
     gosu node npm install -g @earendil-works/pi-coding-agent
+
+    gosu npx skills@latest add mattpocock/skills
 
     #echo "Installing lean-ctx"
     gosu node sh -c "curl -fsSL https://leanctx.com/install.sh | bash -s -- --download"
